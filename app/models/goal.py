@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.sql import func
+from sqlalchemy.orm import relationship
 
 
 from app.db.base import Base
@@ -25,4 +26,8 @@ class Goal(Base):
     end_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(25), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-    user_id = Column(Integer, ForeignKey("users.user_id"), index=True)
+    user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
+
+    user = relationship("User", back_populates="goals")
+    tasks = relationship("Task", back_populates="goal")
+

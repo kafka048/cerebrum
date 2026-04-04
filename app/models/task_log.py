@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint, Date
 from sqlalchemy.sql import func
-
+from sqlalchemy.orm import relationship
 
 from app.db.base import Base
 
@@ -20,3 +20,6 @@ class TaskLog(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     task_id = Column(Integer, ForeignKey("tasks.task_id"), nullable=False, index=True)
     user_id = Column(Integer, ForeignKey("users.user_id"), nullable=False, index=True)
+
+    task = relationship("Task", back_populates="task_logs")
+    user = relationship("User", back_populates="task_logs")
