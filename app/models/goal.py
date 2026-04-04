@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint
+from sqlalchemy import Column, Integer, String, Date, DateTime, ForeignKey, CheckConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -22,12 +22,12 @@ class Goal(Base):
     goal_name = Column(String(255), nullable=False)
     description = Column(String(500), nullable=True)
     priority = Column(Integer, nullable=False)
-    start_date = Column(DateTime(timezone=True), nullable=False)
+    start_date = Column(Date, nullable=False)
     end_date = Column(DateTime(timezone=True), nullable=True)
     status = Column(String(25), nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     user_id = Column(Integer, ForeignKey("users.user_id"), index=True, nullable=False)
 
     user = relationship("User", back_populates="goals")
-    tasks = relationship("Task", back_populates="goal")
+    tasks = relationship("Task", back_populates="goal", cascade="all, delete")
 
