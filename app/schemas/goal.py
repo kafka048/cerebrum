@@ -1,6 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional
+from enum import Enum
+
+
+
+class GoalStatus(str, Enum):
+    completed = "completed"
+    active = "active"
+    abandoned = "abandoned"
 
 class GoalCreate(BaseModel):
     goal_name: str
@@ -8,7 +16,7 @@ class GoalCreate(BaseModel):
     priority: int
     start_date: datetime
     end_date: Optional[datetime] = None
-    status: str
+    status: GoalStatus
 
 class GoalRead(BaseModel):
     goal_id: int
@@ -17,8 +25,8 @@ class GoalRead(BaseModel):
     priority: int
     start_date: datetime
     end_date: Optional[datetime] = None
-    status: str
+    created_at: datetime
+    status: GoalStatus
     user_id: int
 
-    class Config:
-        from_attributes=True
+    model_config = ConfigDict(from_attributes=True)
