@@ -13,12 +13,12 @@ def hash_password(password: str) -> str:
 def verify_password(password: str, hashed_password: str) -> bool:
     return password_context.verify(password, hashed_password)
 
-def create_access_token(data: dict[str, Any]):  
+def create_access_token(data: dict[str, Any]):
     to_encode = data.copy()
 
     expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
-    to_encode.update({'exp' : expire})
+    to_encode.update({"exp" : expire})
 
     return jwt.encode(
         to_encode,

@@ -5,17 +5,15 @@ from app.db.database import get_db
 from app.schemas.goal import GoalCreate, GoalRead
 from app.models.goal import Goal
 from app.models.user import User
+from app.api.auth.dependency import get_current_user
 
 router = APIRouter()
 
 @router.post("/", response_model=GoalRead)
-def create_goal(goal: GoalCreate, db: Session = Depends(get_db)):
-    # first ensure the user exists: never trust anything from the front. always verify at the backend.
-
-    user = db.query(User).filter(User.user_id == goal.user_id).first()
-    if not user:
-        raise HTTPException(status_code=404, detail="This User does not exist.")
-    
+def create_goal(
+    goal: GoalCreate, 
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)):    
     new_goal = Goal(
         goal_name=goal.goal_name,
         description=goal.description,
@@ -23,7 +21,7 @@ def create_goal(goal: GoalCreate, db: Session = Depends(get_db)):
         start_date=goal.start_date,
         end_date=goal.end_date,
         status=goal.status,
-        user_id=goal.user_id
+        user_id=current_user.user_id
     )
 
     db.add(new_goal)
