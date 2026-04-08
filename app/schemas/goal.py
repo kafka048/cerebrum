@@ -11,7 +11,6 @@ class GoalStatus(str, Enum):
     abandoned = "abandoned"
 
 class GoalCreate(BaseModel):
-    user_id: int
     goal_name: str
     description: Optional[str] = None
     priority: int
