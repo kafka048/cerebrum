@@ -17,6 +17,7 @@ class GoalCreate(BaseModel):
     start_date: datetime
     end_date: Optional[datetime] = None
     status: GoalStatus
+    user_id: int
 
 class GoalRead(BaseModel):
     goal_id: int

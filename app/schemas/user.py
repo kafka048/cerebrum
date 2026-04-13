@@ -14,5 +14,13 @@ class UserRead(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class UserLogin(BaseModel):
+    email: str
+    password: str
+
+class TokenResponse(BaseModel):
+    access_token: str | None
+    token_type: str
+
     
         
