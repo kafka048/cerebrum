@@ -2,10 +2,6 @@ from sqlalchemy.orm import Session
 from app.models.user import User
 from app.core.security import verify_password, create_access_token
 
-class UserLogin:
-    email: str
-    password: str
-
 def login_user(email: str, password: str, db: Session):
     email = email.lower().strip()
 
