@@ -11,8 +11,9 @@ def get_task(task_id: int, db: Session, current_user: User) -> Task | None:
     
     return task
 
-def get_all_tasks( db: Session, current_user: User) -> List[Task]:
+def get_all_tasks(goal_id: int, db: Session, current_user: User) -> List[Task]:
     tasks = db.query(Task).join(Goal).filter(
+        Task.goal_id == goal_id,
         Goal.user_id == current_user.user_id
     ).all()
 

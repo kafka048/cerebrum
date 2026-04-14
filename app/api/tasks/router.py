@@ -29,7 +29,7 @@ def fetch(task_id: int, db: Session = Depends(get_db), current_user: User = Depe
     
     return task
 
-@router.get("/", response_model=List[TaskRead])
-def fetch_all(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return get_all_tasks(db, current_user)
+@router.get("/goal/{goal_id}", response_model=List[TaskRead])
+def fetch_all(goal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return get_all_tasks(goal_id, db, current_user)
 
