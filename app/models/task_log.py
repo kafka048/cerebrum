@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint, Date
+from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, CheckConstraint, Date, UniqueConstraint
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 
@@ -11,6 +11,7 @@ class TaskLog(Base):
         "status IN ('failed', 'completed', 'skipped')",
         name="task_log_status_check"
     ),
+    UniqueConstraint("task_id", "log_date", name="uq_task_log_per_day")
     )
 
     tasklog_id = Column(Integer, primary_key=True)
