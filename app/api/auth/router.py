@@ -7,7 +7,7 @@ from app.db.database import get_db
 from app.schemas.user import UserRead, UserCreate, UserLogin, TokenResponse
 
 
-router = APIRouter(prefix='/user/auth', tags=["AUTH"])
+router = APIRouter()
 
 @router.post("/signup", response_model=UserRead)
 def signup(user: UserCreate, db: Session = Depends(get_db)):

@@ -10,7 +10,6 @@ class TaskStatus(str, Enum):
 
 class TaskLogCreate(BaseModel):   
     task_id: int
-    user_id: int
     log_date: date
     status: TaskStatus
     reason: Optional[str] = None

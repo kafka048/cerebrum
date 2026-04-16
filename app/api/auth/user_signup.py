@@ -10,6 +10,9 @@ def create_user(user: UserCreate, db: Session):
     if existing_user:
         return None
     
+    if len(user.password.encode('utf-8')) > 72:
+        return None
+    
     hashed_pwd = hash_password(user.password)
 
     new_user = User(
