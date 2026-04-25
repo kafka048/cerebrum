@@ -7,3 +7,8 @@ class CompletionRateResponse(BaseModel):
     completion_rate: float
 
     
+class SummaryInsightResponse(BaseModel):
+    completion_rate: float
+    missed_days: int
+    current_streak: int
+    
