@@ -1,9 +1,17 @@
 from sqlalchemy.orm import Session
 from datetime import date, timedelta
 
-from app.models import TaskLog, User
+from app.models import TaskLog, User, Task, Goal
 
-def calculate_streak(task_id: int, db: Session, current_user: User) -> int:
+def calculate_streak(task_id: int, db: Session, current_user: User) -> int | None:
+    task = db.query(Task).join(Goal).filter(
+        Task.task_id == task_id,
+        Goal.user_id == current_user.user_id
+    ).first()
+
+    if task is None:
+        return None
+
     logs = db.query(TaskLog.log_date, TaskLog.status).filter(
         TaskLog.task_id == task_id,
         TaskLog.user_id == current_user.user_id
