@@ -14,7 +14,7 @@ from typing import List
 
 router = APIRouter()
 
-@router.post("/", response_model=GoalRead)
+@router.post("/", response_model=GoalRead, status_code=status.HTTP_201_CREATED)
 def create(goal: GoalCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     new_goal = create_goal(goal, db, current_user)
     return new_goal
