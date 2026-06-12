@@ -8,6 +8,11 @@ from schemas.task_log import TaskLogCreate
 
 def signals_aggregator(task_logs: List[TaskLogCreate]) -> Dict[str, Any]:
 
+    if len(task_logs) == 0:
+        return {
+            "msg" : "Tasklog is empty"
+        }
+
     streak = calculate_streak_statistics(task_logs)
     adherence = calculate_adherence_statistics(task_logs)
     momentum = calculate_momentum_statistics(task_logs)
@@ -17,7 +22,8 @@ def signals_aggregator(task_logs: List[TaskLogCreate]) -> Dict[str, Any]:
         "streak" : streak,
         "adherence" : adherence,
         "momentum" : momentum,
-        "consistency" : consistency
+        "consistency" : consistency,
+        "most_recent_date" : max(log.log_date for log in task_logs).strftime("%d/%m/%Y")
     }
 
 
