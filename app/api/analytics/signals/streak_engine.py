@@ -36,18 +36,28 @@ def find_streak_breaks(task_logs: List[TaskLogCreate]) -> List[str]:
     
     return streak_breaks
 
-def calculate_break_distribution(task_logs: list[TaskLogCreate]) -> str:    
+def calculate_break_distribution(task_logs: list[TaskLogCreate]) -> dict[str, Any]:    
     SIGNIFICANT_BREAK_THRESHOLD = 0.4
 
     if len(task_logs) < 3:
-        return "insufficient_data"
+        return {
+            "distribution" : "insufficient_data",
+            "early_break_count": 0,
+            "middle_break_count": 0,
+            "recent_break_count": 0
+        }
 
     earliest_date: date = min(log.log_date for log in task_logs)
     latest_date: date = max(log.log_date for log in task_logs)
 
     total_breaks: int = len(find_streak_breaks(task_logs))
     if total_breaks == 0:
-        return "no_breaks"
+        return {
+            "distribution" : "no_breaks",
+            "early_break_count": 0,
+            "middle_break_count": 0,
+            "recent_break_count": 0
+        }
 
 
     # SPLITTING THE TOTAL LOG INTO 3 PARTS
@@ -71,32 +81,59 @@ def calculate_break_distribution(task_logs: list[TaskLogCreate]) -> str:
     recent_ratio: float = recent_break_count / total_breaks
 
     if(early_ratio > SIGNIFICANT_BREAK_THRESHOLD):
-        return "early_clustered"
+        return {
+            "distribution" : "early_clustered",
+            "early_break_count" : early_break_count,
+            "middle_break_count" : middle_break_count,
+            "recent_break_count" : recent_break_count
+        }
     if(middle_ratio > SIGNIFICANT_BREAK_THRESHOLD):
-        return "middle_clustered"
+        return {
+            "distribution" : "middle_clustered",
+            "early_break_count" : early_break_count,
+            "middle_break_count" : middle_break_count,
+            "recent_break_count" : recent_break_count
+        }
     if(recent_ratio > SIGNIFICANT_BREAK_THRESHOLD):
-        return "recent_clustered"
+        return {
+            "distribution" : "recent_clustered",
+            "early_break_count" : early_break_count,
+            "middle_break_count" : middle_break_count,
+            "recent_break_count" : recent_break_count
+        }
     
     if (
     early_ratio < SIGNIFICANT_BREAK_THRESHOLD and early_break_count > 0 and
     middle_ratio < SIGNIFICANT_BREAK_THRESHOLD and middle_break_count > 0 and
     recent_ratio < SIGNIFICANT_BREAK_THRESHOLD and recent_break_count > 0
     ):
-        return "even_spread"
+        return {
+            "distribution" : "even_spread",
+            "early_break_count" : early_break_count,
+            "middle_break_count" : middle_break_count,
+            "recent_break_count" : recent_break_count
+        }
     
-    return "none"
+    return {
+            "distribution" : "none",
+            "early_break_count" : early_break_count,
+            "middle_break_count" : middle_break_count,
+            "recent_break_count" : recent_break_count
+        }
 
 
 def calculate_streak_statistics(task_logs: List[TaskLogCreate]) -> dict[str, Any]:
     streak: int = calculate_streak(task_logs)
     max_streak: int = calculate_longest_streak(task_logs)
     streak_breaks: List[str] = find_streak_breaks(task_logs)
-    streak_distribution: str = calculate_break_distribution(task_logs)
+    streak_distribution: dict[str, Any] = calculate_break_distribution(task_logs)
+
+    
 
     return {
         'current streak' : streak,
         'longest streak' : max_streak,
-        'streak breaks' : streak_breaks,        
+        'streak_breaks' : streak_breaks,        
         'streak_distribution' : streak_distribution
     }
 
