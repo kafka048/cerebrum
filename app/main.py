@@ -7,6 +7,8 @@ from app.api.goals.router import router as goal_router
 from app.api.tasklogs.router import router as tasklog_router
 from app.api.tasks.router import router as task_router
 
+from app.api.analytics.router import router as analytics_router
+
 
 Base.metadata.create_all(bind=engine)
 
@@ -17,6 +19,9 @@ app.include_router(user_router, prefix="/users", tags=['users'])
 app.include_router(goal_router, prefix="/goals", tags=['goals'])
 app.include_router(task_router, prefix="/tasks", tags=['tasks'])
 app.include_router(tasklog_router, prefix="/tasklogs", tags=['tasklogs'])
+
+app.include_router(analytics_router, tags=["analytics"])
+
 
 
 
