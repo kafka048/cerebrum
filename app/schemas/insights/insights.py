@@ -1,13 +1,12 @@
 from pydantic import BaseModel
 
-class CompletionRateResponse(BaseModel):
-    total_logs: int
-    completed_logs: int
-    completion_rate: float
+class ProfileResult(BaseModel):
+    profile: str
+    score: int
+    total: int
+    confidence: float
+    evidence: list[str]
 
-    
-class SummaryInsightResponse(BaseModel):
-    completion_rate: float
-    missed_days: int
-    current_streak: int
-    
+class InterpretationResult(BaseModel):
+    primary_profile: ProfileResult
+    all_profiles: list[ProfileResult]
