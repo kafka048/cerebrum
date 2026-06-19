@@ -1,10 +1,10 @@
 from typing import Any
-from api.analytics.interpretation.profiles.burnout_profile import score_burnout
-from api.analytics.interpretation.profiles.chaotic_profile import score_chaotic_behavior
-from api.analytics.interpretation.profiles.declining_profile import score_declining
-from api.analytics.interpretation.profiles.recovery_profile import score_recovery_pattern
-from api.analytics.interpretation.profiles.sustainable_profile import score_sustainable_performer
-from api.analytics.interpretation.profiles.weekend_warrior import score_weekend_warrior
+from app.api.analytics.interpretation.profiles.burnout_profile import score_burnout
+from app.api.analytics.interpretation.profiles.chaotic_profile import score_chaotic_behavior
+from app.api.analytics.interpretation.profiles.declining_profile import score_declining
+from app.api.analytics.interpretation.profiles.recovery_profile import score_recovery_pattern
+from app.api.analytics.interpretation.profiles.sustainable_profile import score_sustainable_performer
+from app.api.analytics.interpretation.profiles.weekend_warrior import score_weekend_warrior
 
 
 def interpret(signals: dict[str, Any]) -> dict[str, Any]:
