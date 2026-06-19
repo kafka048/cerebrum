@@ -1,10 +1,10 @@
-from api.analytics.signals.consistency_engine import calculate_consistency_statistics
-from api.analytics.signals.adherence_engine import calculate_adherence_statistics
-from api.analytics.signals.streak_engine import calculate_streak_statistics
-from api.analytics.signals.momentum_engine import calculate_momentum_statistics
+from app.api.analytics.signals.consistency_engine import calculate_consistency_statistics
+from app.api.analytics.signals.adherence_engine import calculate_adherence_statistics
+from app.api.analytics.signals.streak_engine import calculate_streak_statistics
+from app.api.analytics.signals.momentum_engine import calculate_momentum_statistics
 
 from typing import List, Dict, Any
-from schemas.task_log import TaskLogCreate
+from app.schemas.task_log import TaskLogCreate
 
 def signals_aggregator(task_logs: List[TaskLogCreate]) -> Dict[str, Any]:
 

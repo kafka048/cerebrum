@@ -1,4 +1,4 @@
-from schemas.task_log import TaskStatus, TaskLogCreate
+from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List
 
 DIRECTION_WINDOW_SIZE = 10

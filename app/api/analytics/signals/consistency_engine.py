@@ -1,4 +1,4 @@
-from schemas.task_log import TaskStatus, TaskLogCreate
+from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List, Tuple, Dict
 
 def convert_tasklogs_binary(task_logs: List[TaskLogCreate]) -> List[int]:

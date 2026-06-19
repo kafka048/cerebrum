@@ -1,5 +1,5 @@
 from datetime import timedelta, date
-from schemas.task_log import TaskStatus, TaskLogCreate
+from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List, Any
 
 def calculate_streak(task_logs: List[TaskLogCreate]) -> int:
