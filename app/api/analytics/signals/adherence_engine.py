@@ -1,8 +1,13 @@
 from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List, Any
+from datetime import timedelta
 
 
 def calculate_adherence_rate(task_logs: List[TaskLogCreate]) -> float:
+
+    if len(task_logs) == 0:
+        return 0.00
+    
     total_logs: int = len(task_logs)
     completed_logs: int = 0
 
@@ -16,27 +21,35 @@ def calculate_adherence_rate(task_logs: List[TaskLogCreate]) -> float:
     return adherence
 
 def calculate_recent_adherence(task_logs: List[TaskLogCreate]) -> float:
+    
+    RECENT_ADHERENCE_WINDOW = 7
+    recent_logs: List[TaskLogCreate] = task_logs[-RECENT_ADHERENCE_WINDOW:]  
 
-    recent_logs: List[TaskLogCreate] = task_logs[-7:]  
-
-    recent_adherence: float = calculate_adherence_rate(recent_logs)
+    recent_adherence = calculate_adherence_rate(recent_logs)
     return recent_adherence
 
 
 def calculate_temporal_adherence_profile(task_logs: List[TaskLogCreate]) -> dict[str, float]:
+    
+    earliest_date = min(log.log_date for log in task_logs)
+    latest_date = max(log.log_date for log in task_logs)
 
-    WINDOW_SIZE = 5
+    total_days = (latest_date - earliest_date).days
+    third = total_days // 3
 
-    initial_logs: list[TaskLogCreate] = task_logs[:WINDOW_SIZE]
+    early_cutoff = earliest_date + timedelta(days=third)
+    middle_cutoff = earliest_date + timedelta(days=third * 2)
+    
+
+    initial_logs: list[TaskLogCreate] = [log for log in task_logs if log.log_date <= early_cutoff]
     initial_adherence = calculate_adherence_rate(initial_logs)
 
-    recent_logs: list[TaskLogCreate] = task_logs[-WINDOW_SIZE:]
-    recent_adherence = calculate_adherence_rate(recent_logs)
-
-    middle_start = len(task_logs) // 2 - WINDOW_SIZE // 2
-    middle_end = middle_start + WINDOW_SIZE
-    middle_logs: list[TaskLogCreate] = task_logs[middle_start:middle_end]
+    middle_logs: list[TaskLogCreate] = [log for log in task_logs if log.log_date > early_cutoff and log.log_date <= middle_cutoff]
     middle_adherence = calculate_adherence_rate(middle_logs)    
+
+    recent_logs: list[TaskLogCreate] = [log for log in task_logs if log.log_date > middle_cutoff]
+    recent_adherence = calculate_adherence_rate(recent_logs)     
+   
 
     return {
         "initial_adherence" : initial_adherence,
@@ -46,8 +59,8 @@ def calculate_temporal_adherence_profile(task_logs: List[TaskLogCreate]) -> dict
     
 
 def calculate_adherence_statistics(task_logs: List[TaskLogCreate]) -> dict[str, Any]:
-    overall_adherence: float = calculate_adherence_rate(task_logs)
-    recent_adherence: float = calculate_recent_adherence(task_logs)
+    overall_adherence = calculate_adherence_rate(task_logs)
+    recent_adherence = calculate_recent_adherence(task_logs)
     adherence_temporal_profile: dict[str, float] = calculate_temporal_adherence_profile(task_logs)
 
     return {

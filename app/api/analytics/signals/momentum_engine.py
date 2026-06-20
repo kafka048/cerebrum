@@ -24,9 +24,14 @@ def calculate_weighted_score(task_logs: List[TaskLogCreate]) -> float:
 
 def calculate_momentum_direction(task_logs: List[TaskLogCreate]) -> float:
 
+    MIN_WINDOW = 3
+    MAX_WINDOW = 14
+
+    window_size = max(MIN_WINDOW, min(MAX_WINDOW, len(task_logs) // 2))
+
        
-    initial_logs: List[TaskLogCreate] = task_logs[:DIRECTION_WINDOW_SIZE]
-    recent_logs: List[TaskLogCreate] = task_logs[-DIRECTION_WINDOW_SIZE:]
+    initial_logs: List[TaskLogCreate] = task_logs[:window_size]
+    recent_logs: List[TaskLogCreate] = task_logs[-window_size:]
 
     initial_score = calculate_weighted_score(initial_logs)
     recent_score = calculate_weighted_score(recent_logs)
@@ -35,14 +40,15 @@ def calculate_momentum_direction(task_logs: List[TaskLogCreate]) -> float:
     return mom_dirn
 
 def calculate_momentum_acceleration(task_logs: List[TaskLogCreate]) -> float:
-   
 
-    middle_start = len(task_logs) // 2 - ACCELERATION_WINDOW_SIZE // 2
-    middle_end = middle_start + ACCELERATION_WINDOW_SIZE
+    MIN_WINDOW = 2
+    MAX_WINDOW = 10
 
-    initial_logs: List[TaskLogCreate] = task_logs[:ACCELERATION_WINDOW_SIZE]
-    middle_logs: List[TaskLogCreate] = task_logs[middle_start:middle_end]   
-    recent_logs: List[TaskLogCreate] = task_logs[-ACCELERATION_WINDOW_SIZE:]
+    window_size = max(MIN_WINDOW, min(MAX_WINDOW, len(task_logs) // 3))  
+
+    initial_logs: List[TaskLogCreate] = task_logs[-3*window_size:-2*window_size]
+    middle_logs: List[TaskLogCreate] = task_logs[-2*window_size:-window_size]   
+    recent_logs: List[TaskLogCreate] = task_logs[-window_size:]
 
     initial_score: float = calculate_weighted_score(initial_logs)
     middle_score: float = calculate_weighted_score(middle_logs)
