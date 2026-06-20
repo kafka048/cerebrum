@@ -5,12 +5,19 @@ from app.schemas.insights.insights import InterpretationResult
 from app.api.analytics.signals.signals_aggregator import signals_aggregator
 from app.api.analytics.interpretation.interpret import interpret
 
-def get_interpretation(task_id: int, db: Session, current_user: User) -> InterpretationResult | None:
+MINIMUM_ANALYTICS_THRESHOLD = 7
+
+def get_interpretation(task_id: int, db: Session, current_user: User) -> InterpretationResult | dict[str, str] | None:
 
     logs = db.query(TaskLog).filter(
         TaskLog.task_id == task_id,
         TaskLog.user_id == current_user.user_id
-    ).all()
+    ).order_by(TaskLog.log_date).all()
+
+    if len(logs) < MINIMUM_ANALYTICS_THRESHOLD:
+        return {
+            "message":"insufficient_data"
+        }
 
     if not logs:
         return None
