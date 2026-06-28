@@ -1,7 +1,7 @@
 // async function because the backend is called
 const BASE_URL: string = "http://127.0.0.1:8000";  
 const TOKEN_STORAGE_KEY: string = "cerebrum.token";
-async function fetchRequest(endpoint: string, options: RequestInit = {}) {
+export async function fetchRequest(endpoint: string, options: RequestInit = {}) {
 
     const url: string = `${BASE_URL}${endpoint}`; 
 

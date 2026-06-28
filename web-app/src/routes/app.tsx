@@ -54,16 +54,17 @@ function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
 }
 
 function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, session } = useAuth();
+  const { isAuthenticated, isInitialising } = useAuth();  
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    const raw = window.localStorage.getItem("cerebrum.session.v1");
-    if (!raw && !isAuthenticated) {
+    if(isInitialising){
+      return;
+    }
+    if (!isAuthenticated) {
       navigate({ to: "/auth/login" });
     }
-  }, [isAuthenticated, session, navigate]);
+  }, [isAuthenticated, isInitialising, navigate]);
 
   return <>{children}</>;
 }

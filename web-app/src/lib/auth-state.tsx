@@ -1,81 +1,78 @@
+import { getCurrentUser, login, signup } from "@/api/auth";
+import { UserCreate, UserLogin, TokenResponse } from "@/types/user";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+
+const TOKEN_STORAGE_KEY: string = "cerebrum.token";
 
 export type Session = {
   name: string;
   email: string;
-  memberSince: string; // ISO
+  memberSince: string; // ISO 8601 : FastAPI serialises the datetime object to JSON.
 };
 
 type Ctx = {
   session: Session | null;
   isAuthenticated: boolean;
-  signIn: (input: { email: string; password: string }) => Session;
-  signUp: (input: { name?: string; email: string; password: string }) => Session;
+  isInitialising: boolean;
+  signin: (input: { email: string; password: string }) => Promise<void>;
+  signup: (input: { name: string; email: string; password: string }) => Promise<void>;
   signOut: () => void;
 };
 
-const STORAGE_KEY = "cerebrum.session.v1";
 const AuthContext = createContext<Ctx | null>(null);
 
-function readStored(): Session | null {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    return raw ? (JSON.parse(raw) as Session) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeStored(s: Session | null) {
-  if (typeof window === "undefined") return;
-  if (s) window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s));
-  else window.localStorage.removeItem(STORAGE_KEY);
-}
-
-function deriveNameFromEmail(email: string): string {
-  const local = email.split("@")[0] ?? "You";
-  return local
-    .replace(/[._-]+/g, " ")
-    .split(" ")
-    .filter(Boolean)
-    .map((s) => s[0]!.toUpperCase() + s.slice(1))
-    .join(" ");
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<null | Session>(null);
+  const [isInitialising, setIsInitialising] = useState(true);
 
-  // Hydrate after mount to avoid SSR hydration mismatch.
   useEffect(() => {
-    setSession(readStored());
+    initSession();
   }, []);
+
+  async function performSignIn(credentials: UserLogin) {    
+    const token: TokenResponse = await login(credentials);
+    localStorage.setItem(TOKEN_STORAGE_KEY, token.access_token);
+
+    await initSession();
+  }
+
+  async function initSession() {
+    try {
+      const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (token == null) {
+        return;
+      }
+
+      const user = await getCurrentUser();
+      const session: Session = {
+        name: user.name,
+        email: user.email,
+        memberSince: formatMemberSince(user.created_at),
+      };
+      setSession(session);
+    } catch (error) {
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
+      setSession(null);
+      return;
+    } finally {
+      setIsInitialising(false)
+    }
+  }
 
   const value: Ctx = {
     session,
     isAuthenticated: !!session,
-    signIn: ({ email }) => {
-      const existing = readStored();
-      const s: Session =
-        existing && existing.email === email
-          ? existing
-          : { name: deriveNameFromEmail(email), email, memberSince: new Date().toISOString() };
-      writeStored(s);
-      setSession(s);
-      return s;
-    },
-    signUp: ({ name, email }) => {
-      const s: Session = {
-        name: name?.trim() || deriveNameFromEmail(email),
-        email,
-        memberSince: new Date().toISOString(),
-      };
-      writeStored(s);
-      setSession(s);
-      return s;
+    isInitialising,
+    signin: performSignIn,
+    signup: async (credentials: UserCreate) => {
+      await signup(credentials);
+      await performSignIn({
+        email: credentials.email,
+        password: credentials.password,
+      });
     },
     signOut: () => {
-      writeStored(null);
+      localStorage.removeItem(TOKEN_STORAGE_KEY);
       setSession(null);
     },
   };
@@ -93,8 +90,18 @@ export function formatMemberSince(iso: string): string {
   try {
     const d = new Date(iso);
     const MONTHS = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December",
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December",
     ];
     return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
   } catch {

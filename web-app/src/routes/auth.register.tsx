@@ -14,7 +14,7 @@ export const Route = createFileRoute("/auth/register")({
 });
 
 function RegisterPage() {
-  const { signUp } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -33,7 +33,7 @@ function RegisterPage() {
       setError("Passwords do not match.");
       return;
     }
-    signUp({ name, email: email.trim(), password });
+    signup({ name, email: email.trim(), password });   
     navigate({ to: "/app" });
   };
 

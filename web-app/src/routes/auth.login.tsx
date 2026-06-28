@@ -14,21 +14,31 @@ export const Route = createFileRoute("/auth/login")({
 });
 
 function LoginPage() {
-  const { signIn } = useAuth();
+  const { signin } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim() || !password) {
-      setError("Email and password are required.");
-      return;
+    try {
+      if (!email.trim() || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+      await signin({ email: email.trim(), password });
+      console.log("You have signed in")
+      console.log("Navigating to app now")
+      navigate({ to: "/app" });
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong.");
+      }
     }
-    signIn({ email: email.trim(), password });
-    navigate({ to: "/app" });
   };
 
   return (
@@ -70,7 +80,10 @@ function LoginPage() {
           className="group mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-[13.5px] font-medium text-background transition-transform hover:-translate-y-px"
         >
           Continue
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+          <ArrowRight
+            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+            strokeWidth={1.75}
+          />
         </button>
       </form>
 
