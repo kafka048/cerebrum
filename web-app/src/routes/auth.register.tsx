@@ -22,24 +22,34 @@ function RegisterPage() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (!email.trim() || !password) {
-      setError("Email and password are required.");
-      return;
+    try {
+      if (!email.trim() || !password) {
+        setError("Email and password are required.");
+        return;
+      }
+      if (password !== confirm) {
+        setError("Passwords do not match.");
+        return;
+      }
+      await signup({ name, email: email.trim(), password });
+      navigate({ to: "/app" });
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong.");
+      }
     }
-    if (password !== confirm) {
-      setError("Passwords do not match.");
-      return;
-    }
-    signup({ name, email: email.trim(), password });   
-    navigate({ to: "/app" });
   };
 
   return (
     <section>
-      <p className="text-[10px] uppercase tracking-[0.22em] text-understanding">Build Your Profile</p>
+      <p className="text-[10px] uppercase tracking-[0.22em] text-understanding">
+        Build Your Profile
+      </p>
       <h1 className="mt-4 font-display text-[40px] leading-[1.05] tracking-tight text-foreground">
         Create your account.
       </h1>
@@ -49,20 +59,39 @@ function RegisterPage() {
 
       <form onSubmit={submit} className="mt-10 space-y-4">
         <Field label="Name" value={name} onChange={setName} placeholder="Your name" />
-        <Field label="Email" type="email" value={email} onChange={setEmail} placeholder="you@domain.com" />
-        <Field label="Password" type="password" value={password} onChange={setPassword} placeholder="••••••••" />
-        <Field label="Confirm Password" type="password" value={confirm} onChange={setConfirm} placeholder="••••••••" />
+        <Field
+          label="Email"
+          type="email"
+          value={email}
+          onChange={setEmail}
+          placeholder="you@domain.com"
+        />
+        <Field
+          label="Password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          placeholder="••••••••"
+        />
+        <Field
+          label="Confirm Password"
+          type="password"
+          value={confirm}
+          onChange={setConfirm}
+          placeholder="••••••••"
+        />
 
-        {error && (
-          <p className="text-[12px] text-failed">{error}</p>
-        )}
+        {error && <p className="text-[12px] text-failed">{error}</p>}
 
         <button
           type="submit"
           className="group mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-[13.5px] font-medium text-background transition-transform hover:-translate-y-px"
         >
           Build Your Profile
-          <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+          <ArrowRight
+            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+            strokeWidth={1.75}
+          />
         </button>
       </form>
 

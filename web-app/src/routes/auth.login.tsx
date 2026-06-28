@@ -28,9 +28,7 @@ function LoginPage() {
         setError("Email and password are required.");
         return;
       }
-      await signin({ email: email.trim(), password });
-      console.log("You have signed in")
-      console.log("Navigating to app now")
+      await signin({ email: email.trim(), password });      
       navigate({ to: "/app" });
     } catch (error) {
       if (error instanceof Error) {
