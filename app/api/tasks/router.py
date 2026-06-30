@@ -6,7 +6,7 @@ from app.models import User
 from app.db.database import get_db
 from app.api.auth.dependency import get_current_user
 from app.api.tasks.create_task import create_task
-from app.api.tasks.get_tasks import get_task, get_all_tasks
+from app.api.tasks.get_tasks import get_task, get_all_tasks_by_goal, get_all_tasks
 
 from typing import List
 
@@ -31,5 +31,10 @@ def fetch(task_id: int, db: Session = Depends(get_db), current_user: User = Depe
 
 @router.get("/goal/{goal_id}", response_model=List[TaskRead])
 def fetch_all(goal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return get_all_tasks(goal_id, db, current_user)
+    return get_all_tasks_by_goal(goal_id, db, current_user)
 
+@router.get("/", response_model=list[TaskRead])
+def fetch_all_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return get_all_tasks(db, current_user)
+
+    
