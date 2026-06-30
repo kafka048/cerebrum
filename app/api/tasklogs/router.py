@@ -6,7 +6,7 @@ from app.models import User
 from app.db.database import get_db
 from app.api.auth.dependency import get_current_user
 from app.api.tasklogs.create_tasklog import create_tasklog
-from app.api.tasklogs.get_tasklogs import get_all_tasklogs, get_tasklog
+from app.api.tasklogs.get_tasklogs import get_all_tasklogs, get_all_tasklogs_for_task, get_tasklog
 
 from typing import List
 
@@ -36,6 +36,10 @@ def fetch(tasklog_id: int, db: Session = Depends(get_db), current_user: User = D
 
 @router.get("/task/{task_id}", response_model=List[TaskLogRead])
 def fetch_all(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
-    return get_all_tasklogs(task_id, db, current_user)
+    return get_all_tasklogs_for_task(task_id, db, current_user)
+
+@router.get("/", response_model=List[TaskLogRead])
+def fetch_all_tasklogs(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    return get_all_tasklogs(db, current_user)
 
     

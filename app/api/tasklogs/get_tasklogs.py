@@ -13,13 +13,21 @@ def get_tasklog(tasklog_id: int, db: Session, current_user: User) -> TaskLog | N
     
     return tasklog
 
-def get_all_tasklogs(task_id: int, db:Session, current_user: User) -> List[TaskLog]:
+def get_all_tasklogs_for_task(task_id: int, db:Session, current_user: User) -> List[TaskLog]:
     tasklogs = db.query(TaskLog).filter(
         TaskLog.task_id == task_id,
         TaskLog.user_id == current_user.user_id
     ).all()
 
     return tasklogs
+
+def get_all_tasklogs(db: Session, current_user: User) -> List[TaskLog]:
+    tasklogs = db.query(TaskLog).filter(
+        TaskLog.user_id == current_user.user_id
+    ).all()
+
+    return tasklogs
+
 
 
     
