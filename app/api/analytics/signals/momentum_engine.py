@@ -1,3 +1,4 @@
+from app.schemas.signal import MomentumResult
 from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List
 
@@ -61,16 +62,16 @@ def calculate_momentum_acceleration(task_logs: List[TaskLogCreate]) -> float:
     return mom_acc
      
     
-def calculate_momentum_statistics(task_logs: List[TaskLogCreate]) -> dict[str, float]:
+def calculate_momentum_statistics(task_logs: List[TaskLogCreate]) -> MomentumResult:
     weighted_score = calculate_weighted_score(task_logs)
     momentum_direction = calculate_momentum_direction(task_logs)
     momentum_acceleration = calculate_momentum_acceleration(task_logs)
 
-    return {
-         "weighted_score" : weighted_score,
-         "momentum_direction" : momentum_direction,
-         "momentum_acceleration": momentum_acceleration
-    }
+    return MomentumResult(
+        weighted_score=weighted_score,
+        momentum_direction=momentum_direction,
+        momentum_acceleration=momentum_acceleration
+    )
 
 
 

@@ -1,5 +1,6 @@
+from app.schemas.signal import ConsistencyResult
 from app.schemas.task_log import TaskStatus, TaskLogCreate
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 def convert_tasklogs_binary(task_logs: List[TaskLogCreate]) -> List[int]:
     values: List[int] = []
@@ -94,18 +95,17 @@ def calculate_behavioural_run_profile(task_logs: List[TaskLogCreate]) -> Tuple[f
 
     return average_positive_run, average_negative_run
 
-def calculate_consistency_statistics(task_logs: List[TaskLogCreate]) -> Dict[str, float]:
+def calculate_consistency_statistics(task_logs: List[TaskLogCreate]) -> ConsistencyResult:
     transition_rate = calculate_transition_rate(task_logs)
     average_run = calculate_average_run(task_logs)
     positive_average_run, negative_average_run = calculate_behavioural_run_profile(task_logs)
 
-    return {
-        "transition_rate" : transition_rate,
-        "average_run": average_run,
-        "positive_average_run": positive_average_run,
-        "negative_average_run": negative_average_run
-    }
-
+    return ConsistencyResult(
+        transition_rate=transition_rate,
+        average_run=average_run,
+        average_positive_run=positive_average_run,
+        average_negative_run=negative_average_run
+    )
 
 
 

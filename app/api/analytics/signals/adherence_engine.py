@@ -1,5 +1,6 @@
+from app.schemas.signal import AdherenceResult
 from app.schemas.task_log import TaskStatus, TaskLogCreate
-from typing import List, Any
+from typing import List
 from datetime import timedelta
 
 
@@ -58,21 +59,16 @@ def calculate_temporal_adherence_profile(task_logs: List[TaskLogCreate]) -> dict
     }
     
 
-def calculate_adherence_statistics(task_logs: List[TaskLogCreate]) -> dict[str, Any]:
+def calculate_adherence_statistics(task_logs: List[TaskLogCreate]) -> AdherenceResult:
     overall_adherence = calculate_adherence_rate(task_logs)
     recent_adherence = calculate_recent_adherence(task_logs)
-    adherence_temporal_profile: dict[str, float] = calculate_temporal_adherence_profile(task_logs)
+    temporal_adherence_profile: dict[str, float] = calculate_temporal_adherence_profile(task_logs)
 
-    return {
-        "overall_adherence" : overall_adherence,
-        "recent_adherence" : recent_adherence,
-        "temporal_adherence_profile" : {
-            "initial_profile" : adherence_temporal_profile["initial_adherence"],
-            "middle_profile" : adherence_temporal_profile["middle_adherence"],
-            "recent_profile" : adherence_temporal_profile["recent_adherence"]
-        }    
-    }
-    
+    return AdherenceResult(
+        overall_adherence=overall_adherence,
+        recent_adherence=recent_adherence,
+        temporal_adherence_profile=temporal_adherence_profile
+    )
     
     
 

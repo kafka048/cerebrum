@@ -1,4 +1,5 @@
 from datetime import timedelta, date
+from app.schemas.signal import StreakResult
 from app.schemas.task_log import TaskStatus, TaskLogCreate
 from typing import List, Any
 
@@ -122,7 +123,7 @@ def calculate_break_distribution(task_logs: list[TaskLogCreate]) -> dict[str, An
         }
 
 
-def calculate_streak_statistics(task_logs: List[TaskLogCreate]) -> dict[str, Any]:
+def calculate_streak_statistics(task_logs: List[TaskLogCreate]) -> StreakResult:
     streak: int = calculate_streak(task_logs)
     max_streak: int = calculate_longest_streak(task_logs)
     streak_breaks: List[str] = find_streak_breaks(task_logs)
@@ -130,13 +131,12 @@ def calculate_streak_statistics(task_logs: List[TaskLogCreate]) -> dict[str, Any
 
     
 
-    return {
-        'current streak' : streak,
-        'longest streak' : max_streak,
-        'streak_breaks' : streak_breaks,        
-        'streak_distribution' : streak_distribution
-    }
-
+    return StreakResult(
+    current_streak=streak,
+    longest_streak=max_streak,
+    streak_breaks=streak_breaks,
+    streak_distribution=streak_distribution,
+)
 
     
 
