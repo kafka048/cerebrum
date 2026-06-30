@@ -1,4 +1,5 @@
-from typing import Any
+from app.schemas.insights.insights import ProfileResult
+from app.schemas.signal import SignalResult
 
 
 
@@ -31,12 +32,12 @@ MAX_STREAK_BREAKS_THRESHOLD = 5
 
 # INTERPRETATION
 
-def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
+def score_sustainable_performer(signals: SignalResult) -> ProfileResult:
 
-    streak = signals["streak"]
-    adherence = signals["adherence"]
-    momentum = signals["momentum"]
-    consistency = signals["consistency"]
+    streak = signals.streak
+    adherence = signals.adherence
+    momentum = signals.momentum
+    consistency = signals.consistency
 
     score = 0
     total = 32
@@ -47,7 +48,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
     # ADHERENCE
 
     if (
-        adherence["overall_adherence"]
+        adherence.overall_adherence 
         > STRONG_ADHERENCE_THRESHOLD
     ):
         score += 3
@@ -56,7 +57,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        adherence["recent_adherence"]
+        adherence.recent_adherence
         > STRONG_ADHERENCE_THRESHOLD
     ):
         score += 3
@@ -66,8 +67,8 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
 
     if (
         abs(
-            adherence["recent_adherence"]
-            - adherence["overall_adherence"]
+            adherence.recent_adherence
+            - adherence.overall_adherence
         )
         < ADHERENCE_STABILITY_THRESHOLD
     ):
@@ -76,7 +77,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
             "Adherence remains stable across time"
         )
 
-    temporal = adherence["temporal_adherence_profile"]
+    temporal = adherence.temporal_adherence_profile
 
     initial = temporal["initial_profile"]
     middle = temporal["middle_profile"]
@@ -98,7 +99,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
     # MOMENTUM
 
     if (
-        momentum["weighted_score"]
+        momentum.weighted_score
         > STRONG_WEIGHTED_SCORE_THRESHOLD
     ):
         score += 2
@@ -108,7 +109,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
 
     if (
         MINOR_POSITIVE_MOMENTUM_THRESHOLD
-        < momentum["momentum_direction"]
+        < momentum.momentum_direction
         < STABLE_MOMENTUM_THRESHOLD
     ):
         score += 2
@@ -117,7 +118,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        abs(momentum["momentum_acceleration"])
+        abs(momentum.momentum_acceleration)
         < MOMENTUM_PLATEAU_THRESHOLD
     ):
         score += 2
@@ -130,7 +131,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
 
     if (
         LOW_TRANSITION_THRESHOLD
-        < consistency["transition_rate"]
+        < consistency.transition_rate
         < MODERATE_TRANSITION_THRESHOLD
     ):
         score += 3
@@ -139,7 +140,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        consistency["positive_average_run"]
+        consistency.average_positive_run
         > POSITIVE_RUN_THRESHOLD
     ):
         score += 2
@@ -148,7 +149,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        consistency["negative_average_run"]
+        consistency.average_negative_run
         < NEGATIVE_RUN_THRESHOLD
     ):
         score += 2
@@ -160,7 +161,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
     # STREAK
 
     if (
-        streak["current streak"]
+        streak.current_streak
         > ACTIVE_STREAK_THRESHOLD
     ):
         score += 2
@@ -169,7 +170,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        streak["longest streak"]
+        streak.longest_streak
         > SUSTAINED_CAPACITY_THRESHOLD
     ):
         score += 1
@@ -179,8 +180,8 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
 
     if (
         abs(
-            streak["current streak"]
-            - streak["longest streak"]
+            streak.current_streak
+            - streak.longest_streak
         )
         < STREAK_PROXIMITY_THRESHOLD
     ):
@@ -190,7 +191,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        len(streak["streak_breaks"])
+        len(streak.streak_breaks)
         < MAX_STREAK_BREAKS_THRESHOLD
     ):
         score += 1
@@ -199,7 +200,7 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
         )
 
     if (
-        streak["streak_distribution"]
+        streak.streak_distribution["distribution"]
         == "even_spread"
     ):
         score += 1
@@ -209,10 +210,10 @@ def score_sustainable_performer(signals: dict[str, Any]) -> dict[str, Any]:
 
     confidence = score / total
 
-    return {
-        "profile": "sustainable_performer",
-        "score": score,
-        "total": total,
-        "confidence": confidence,
-        "evidence": evidence,
-    }
+    return ProfileResult(
+        profile="sustainable",
+        score=score,
+        total=total,
+        confidence=confidence,
+        evidence=evidence,
+    )

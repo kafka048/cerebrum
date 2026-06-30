@@ -1,4 +1,5 @@
-from typing import Any
+from app.schemas.insights.insights import ProfileResult
+from app.schemas.signal import SignalResult
 
 
 # THRESHOLDS
@@ -30,13 +31,13 @@ CURRENT_STREAK_THRESHOLD = 2
 # INTERPRETATION
 
 def score_chaotic_behavior(
-    signals: dict[str, Any]
-) -> dict[str, Any]:
+    signals: SignalResult
+) -> ProfileResult:
 
-    streak = signals["streak"]
-    adherence = signals["adherence"]
-    momentum = signals["momentum"]
-    consistency = signals["consistency"]
+    streak = signals.streak
+    adherence = signals.adherence
+    momentum = signals.momentum
+    consistency = signals.consistency
 
     score = 0
     total = 33
@@ -48,7 +49,7 @@ def score_chaotic_behavior(
     if (
         LOW_ADHERENCE_THRESHOLD
         <
-        adherence["overall_adherence"]
+        adherence.overall_adherence
         <
         HIGH_ADHERENCE_THRESHOLD
     ):
@@ -59,9 +60,9 @@ def score_chaotic_behavior(
 
     if (
         abs(
-            adherence["overall_adherence"]
+            adherence.overall_adherence
             -
-            adherence["recent_adherence"]
+            adherence.recent_adherence
         )
         <
         ADHERENCE_STABILITY_THRESHOLD
@@ -71,7 +72,7 @@ def score_chaotic_behavior(
             "Instability appears persistent rather than recent"
         )
 
-    temporal = adherence["temporal_adherence_profile"]
+    temporal = adherence.temporal_adherence_profile
 
     initial = temporal["initial_profile"]
     middle = temporal["middle_profile"]
@@ -94,7 +95,7 @@ def score_chaotic_behavior(
     if (
         NEGATIVE_MOMENTUM_THRESHOLD
         <
-        momentum["momentum_direction"]
+        momentum.momentum_direction
         <
         POSITIVE_MOMENTUM_THRESHOLD
     ):
@@ -106,7 +107,7 @@ def score_chaotic_behavior(
     if (
         LOW_WEIGHTED_SCORE_THRESHOLD
         <
-        momentum["weighted_score"]
+        momentum.weighted_score
         <
         HIGH_WEIGHTED_SCORE_THRESHOLD
     ):
@@ -117,7 +118,7 @@ def score_chaotic_behavior(
 
     if (
         abs(
-            momentum["momentum_acceleration"]
+            momentum.momentum_acceleration
         )
         <
         MOMENTUM_ACCELERATION_THRESHOLD
@@ -130,7 +131,7 @@ def score_chaotic_behavior(
     # CONSISTENCY
 
     if (
-        consistency["transition_rate"]
+        consistency.transition_rate
         >
         TRANSITION_RATE_THRESHOLD
     ):
@@ -140,7 +141,7 @@ def score_chaotic_behavior(
         )
 
     if (
-        consistency["average_run"]
+        consistency.average_run
         <
         AVERAGE_RUN_THRESHOLD
     ):
@@ -150,7 +151,7 @@ def score_chaotic_behavior(
         )
 
     if (
-        consistency["positive_average_run"]
+        consistency.average_positive_run
         <
         AVERAGE_RUN_THRESHOLD
     ):
@@ -160,7 +161,7 @@ def score_chaotic_behavior(
         )
 
     if (
-        consistency["negative_average_run"]
+        consistency.average_negative_run
         <
         AVERAGE_RUN_THRESHOLD
     ):
@@ -171,9 +172,9 @@ def score_chaotic_behavior(
 
     if (
         abs(
-            consistency["positive_average_run"]
+            consistency.average_positive_run
             -
-            consistency["negative_average_run"]
+            consistency.average_negative_run
         )
         <
         RUN_SYMMETRY_THRESHOLD
@@ -186,7 +187,7 @@ def score_chaotic_behavior(
     # STREAK
 
     if (
-        streak["longest streak"]
+        streak.longest_streak
         <
         LONGEST_STREAK_THRESHOLD
     ):
@@ -196,7 +197,7 @@ def score_chaotic_behavior(
         )
 
     if (
-        streak["current streak"]
+        streak.current_streak
         <=
         CURRENT_STREAK_THRESHOLD
     ):
@@ -206,7 +207,7 @@ def score_chaotic_behavior(
         )
 
     if (
-        streak["streak_distribution"]["distribution"]
+        streak.streak_distribution["distribution"]
         ==
         "even_spread"
     ):
@@ -217,10 +218,10 @@ def score_chaotic_behavior(
 
     confidence = score / total
 
-    return {
-        "profile": "chaotic_behavior",
-        "score": score,
-        "total": total,
-        "confidence": confidence,
-        "evidence": evidence,
-    }
+    return ProfileResult(
+        profile="chaotic_behavior",
+        score=score,
+        total=total,
+        confidence=confidence,
+        evidence=evidence,
+    )

@@ -1,4 +1,5 @@
-from typing import Any
+from app.schemas.insights.insights import ProfileResult
+from app.schemas.signal import SignalResult
 
 # THRESHOLDS
 
@@ -17,12 +18,12 @@ LONGEST_STREAK_THRESHOLD = 5
 # INTERPRETATION
 
 def score_declining(
-    signals: dict[str, Any]
-) -> dict[str, Any]:
-    streak = signals["streak"]
-    adherence = signals["adherence"]
-    momentum = signals["momentum"]
-    consistency = signals["consistency"]
+    signals: SignalResult
+) -> ProfileResult:
+    streak = signals.streak
+    adherence = signals.adherence
+    momentum = signals.momentum
+    consistency = signals.consistency
     score = 0
     total = 22
     evidence: list[str] = []
@@ -30,7 +31,7 @@ def score_declining(
     # ADHERENCE
 
     if (
-        adherence["overall_adherence"]
+        adherence.overall_adherence
         > OVERALL_ADHERENCE_THRESHOLD
     ):
         score += 2
@@ -38,14 +39,14 @@ def score_declining(
             "Execution history is reasonably strong"
         )
     if (
-        adherence["recent_adherence"]
+        adherence.recent_adherence
         < RECENT_ADHERENCE_THRESHOLD
     ):
         score += 3
         evidence.append(
             "Recent execution quality is poor"
         )
-    temporal = adherence["temporal_adherence_profile"]
+    temporal = adherence.temporal_adherence_profile
     initial = temporal["initial_profile"]
     middle = temporal["middle_profile"]
     recent = temporal["recent_profile"]
@@ -64,7 +65,7 @@ def score_declining(
     # MOMENTUM
 
     if (
-        momentum["weighted_score"]
+        momentum.weighted_score
         < WEIGHTED_SCORE_THRESHOLD
     ):
         score += 2
@@ -72,7 +73,7 @@ def score_declining(
             "Recent activity intensity is low"
         )
     if (
-        momentum["momentum_direction"]
+        momentum.momentum_direction
         < NEGATIVE_MOMENTUM_THRESHOLD
     ):
         score += 2
@@ -80,7 +81,7 @@ def score_declining(
             "Behavioral momentum is strongly negative"
         )
     if (
-        momentum["momentum_acceleration"]
+        momentum.momentum_acceleration
         < MOMENTUM_ACCELERATION_THRESHOLD
     ):
         score += 1
@@ -92,7 +93,7 @@ def score_declining(
 
     if (
         LOW_TRANSITION_THRESHOLD
-        < consistency["transition_rate"]
+        < consistency.transition_rate
         < HIGH_TRANSITION_THRESHOLD
     ):
         score += 3
@@ -101,7 +102,7 @@ def score_declining(
         )
     if (
         MIN_AVERAGE_RUN_THRESHOLD
-        < consistency["average_run"]
+        < consistency.average_run
         < MAX_AVERAGE_RUN_THRESHOLD
     ):
         score += 2
@@ -110,7 +111,7 @@ def score_declining(
         )
     # STREAK
     if (
-        streak["current streak"]
+        streak.current_streak
         == 0
     ):
         score += 1
@@ -118,14 +119,14 @@ def score_declining(
             "No active execution streak is present"
         )
     if (
-        streak["longest streak"]
+        streak.longest_streak
         > LONGEST_STREAK_THRESHOLD
     ):
         score += 1
         evidence.append(
             "Historical execution capacity is evident"
         )
-    break_profile = streak["streak_distribution"]
+    break_profile = streak.streak_distribution
     if(
         break_profile["distribution"]
         == "recent_clustered"
@@ -142,10 +143,10 @@ def score_declining(
         )
     confidence = score / total
 
-    return {
-        "profile": "declining",
-        "score": score,
-        "total": total,
-        "confidence": confidence,
-        "evidence": evidence,
-    }
+    return ProfileResult(
+        profile="declining",
+        score=score,
+        total=total,
+        confidence=confidence,
+        evidence=evidence,
+    )

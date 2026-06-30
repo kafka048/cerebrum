@@ -1,4 +1,5 @@
-from typing import Any
+from app.schemas.insights.insights import ProfileResult
+from app.schemas.signal import SignalResult
 
 
 # THRESHOLDS
@@ -21,13 +22,13 @@ STREAK_PROXIMITY_THRESHOLD = 3
 # INTERPRETATION
 
 def score_recovery_pattern(
-    signals: dict[str, Any]
-) -> dict[str, Any]:
+    signals: SignalResult
+) -> ProfileResult:
 
-    streak = signals["streak"]
-    adherence = signals["adherence"]
-    momentum = signals["momentum"]
-    consistency = signals["consistency"]
+    streak = signals.streak
+    adherence = signals.adherence
+    momentum = signals.momentum
+    consistency = signals.consistency
 
     score = 0
     total = 25
@@ -37,7 +38,7 @@ def score_recovery_pattern(
     # ADHERENCE
 
     if (
-        adherence["overall_adherence"]
+        adherence.overall_adherence
         > OVERALL_ADHERENCE_THRESHOLD
     ):
         score += 2
@@ -46,7 +47,7 @@ def score_recovery_pattern(
         )
 
     if (
-        adherence["recent_adherence"]
+        adherence.recent_adherence
         > RECENT_ADHERENCE_THRESHOLD
     ):
         score += 3
@@ -54,7 +55,7 @@ def score_recovery_pattern(
             "Recent execution is exceptionally strong"
         )
 
-    temporal = adherence["temporal_adherence_profile"]
+    temporal = adherence.temporal_adherence_profile
 
     initial = temporal["initial_profile"]
     middle = temporal["middle_profile"]
@@ -75,7 +76,7 @@ def score_recovery_pattern(
     # MOMENTUM
 
     if (
-        momentum["weighted_score"]
+        momentum.weighted_score
         > WEIGHTED_SCORE_THRESHOLD
     ):
         score += 3
@@ -84,7 +85,7 @@ def score_recovery_pattern(
         )
 
     if (
-        momentum["momentum_direction"]
+        momentum.momentum_direction
         > POSITIVE_MOMENTUM_THRESHOLD
     ):
         score += 3
@@ -93,7 +94,7 @@ def score_recovery_pattern(
         )
 
     if (
-        momentum["momentum_acceleration"]
+        momentum.momentum_acceleration
         < 0
     ):
         score += 1
@@ -104,7 +105,7 @@ def score_recovery_pattern(
     # CONSISTENCY
 
     if (
-        consistency["transition_rate"]
+        consistency.transition_rate
         < TRANSITION_RATE_THRESHOLD
     ):
         score += 1
@@ -113,9 +114,9 @@ def score_recovery_pattern(
         )
 
     if (
-        consistency["positive_average_run"]
+        consistency.average_positive_run
         >
-        consistency["negative_average_run"]
+        consistency.average_negative_run
     ):
         score += 1
         evidence.append(
@@ -125,7 +126,7 @@ def score_recovery_pattern(
     # STREAK
 
     if (
-        streak["current streak"]
+        streak.current_streak
         > CURRENT_STREAK_THRESHOLD
     ):
         score += 3
@@ -135,8 +136,8 @@ def score_recovery_pattern(
 
     if (
         abs(
-            streak["current streak"]
-            - streak["longest streak"]
+            streak.current_streak
+            - streak.longest_streak
         )
         < STREAK_PROXIMITY_THRESHOLD
     ):
@@ -146,7 +147,7 @@ def score_recovery_pattern(
         )
 
     if (
-        streak["streak_distribution"]
+        streak.streak_distribution["distribution"]
         == "early_clustered"
     ):
         score += 3
@@ -156,10 +157,10 @@ def score_recovery_pattern(
 
     confidence = score / total
 
-    return {
-        "profile": "recovery_pattern",
-        "score": score,
-        "total": total,
-        "confidence": confidence,
-        "evidence": evidence,
-    }
+    return ProfileResult(
+        profile="recovering",
+        score=score,
+        total=total,
+        confidence=confidence,
+        evidence=evidence,
+    )

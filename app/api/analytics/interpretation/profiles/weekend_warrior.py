@@ -1,4 +1,5 @@
-from typing import Any
+from app.schemas.insights.insights import ProfileResult
+from app.schemas.signal import SignalResult
 
 
 # THRESHOLDS
@@ -27,13 +28,13 @@ LONGEST_STREAK_THRESHOLD = 3
 # INTERPRETATION
 
 def score_weekend_warrior(
-    signals: dict[str, Any]
-) -> dict[str, Any]:
+    signals: SignalResult
+) -> ProfileResult:
 
-    streak = signals["streak"]
-    adherence = signals["adherence"]
-    momentum = signals["momentum"]
-    consistency = signals["consistency"]
+    streak = signals.streak
+    adherence = signals.adherence
+    momentum = signals.momentum
+    consistency = signals.consistency
 
     score = 0
     total = 38
@@ -43,7 +44,7 @@ def score_weekend_warrior(
     # ADHERENCE
 
     if (
-        adherence["overall_adherence"]
+        adherence.overall_adherence
         < LOW_ADHERENCE_THRESHOLD
     ):
         score += 3
@@ -52,7 +53,7 @@ def score_weekend_warrior(
         )
 
     if (
-        adherence["recent_adherence"]
+        adherence.recent_adherence
         < LOW_ADHERENCE_THRESHOLD
     ):
         score += 3
@@ -62,9 +63,9 @@ def score_weekend_warrior(
 
     if (
         abs(
-            adherence["recent_adherence"]
+            adherence.recent_adherence
             -
-            adherence["overall_adherence"]
+            adherence.overall_adherence
         )
         <
         ADHERENCE_STABILITY_THRESHOLD
@@ -74,7 +75,7 @@ def score_weekend_warrior(
             "Execution behavior remains unchanged over time"
         )
 
-    temporal = adherence["temporal_adherence_profile"]
+    temporal = adherence.temporal_adherence_profile
 
     initial = temporal["initial_profile"]
     middle = temporal["middle_profile"]
@@ -101,7 +102,7 @@ def score_weekend_warrior(
     # MOMENTUM
 
     if (
-        momentum["weighted_score"]
+        momentum.weighted_score
         < WEIGHTED_SCORE_THRESHOLD
     ):
         score += 2
@@ -112,7 +113,7 @@ def score_weekend_warrior(
     if (
         NEGATIVE_MOMENTUM_THRESHOLD
         <
-        momentum["momentum_direction"]
+        momentum.momentum_direction
         <
         POSITIVE_MOMENTUM_THRESHOLD
     ):
@@ -123,7 +124,7 @@ def score_weekend_warrior(
 
     if (
         abs(
-            momentum["momentum_acceleration"]
+            momentum.momentum_acceleration
         )
         <
         MOMENTUM_ACCELERATION_THRESHOLD
@@ -138,7 +139,7 @@ def score_weekend_warrior(
     if (
         LOW_TRANSITION_THRESHOLD
         <
-        consistency["transition_rate"]
+        consistency.transition_rate
         <
         HIGH_TRANSITION_THRESHOLD
     ):
@@ -148,9 +149,9 @@ def score_weekend_warrior(
         )
 
     if (
-        consistency["negative_average_run"]
+        consistency.average_negative_run
         >
-        consistency["positive_average_run"]
+        consistency.average_positive_run
     ):
         score += 4
         evidence.append(
@@ -158,7 +159,7 @@ def score_weekend_warrior(
         )
 
     if (
-        consistency["positive_average_run"]
+        consistency.average_positive_run
         <
         POSITIVE_RUN_THRESHOLD
     ):
@@ -168,7 +169,7 @@ def score_weekend_warrior(
         )
 
     if (
-        consistency["negative_average_run"]
+        consistency.average_negative_run
         >
         NEGATIVE_RUN_THRESHOLD
     ):
@@ -180,7 +181,7 @@ def score_weekend_warrior(
     # STREAK
 
     if (
-        streak["current streak"]
+        streak.current_streak
         == 0
     ):
         score += 2
@@ -189,7 +190,7 @@ def score_weekend_warrior(
         )
 
     if (
-        streak["longest streak"]
+        streak.longest_streak
         <
         LONGEST_STREAK_THRESHOLD
     ):
@@ -199,7 +200,7 @@ def score_weekend_warrior(
         )
 
     if (
-        streak["streak_distribution"]["distribution"]
+        streak.streak_distribution["distribution"]
         ==
         "even_spread"
     ):
@@ -210,10 +211,10 @@ def score_weekend_warrior(
 
     confidence = score / total
 
-    return {
-        "profile": "weekend_warrior",
-        "score": score,
-        "total": total,
-        "confidence": confidence,
-        "evidence": evidence,
-    }
+    return ProfileResult(
+        profile="weekend_warrior",
+        score=score,
+        total=total,
+        confidence=confidence,
+        evidence=evidence,
+    )
