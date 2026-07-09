@@ -1,7 +1,9 @@
 from fastapi import HTTPException, APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.schemas.goal import GoalRead, GoalCreate
+from app.api.goals.delete_goal import delete_goal
+from app.api.goals.update_goal import update_goal
+from app.schemas.goal import GoalRead, GoalCreate, GoalUpdate
 from app.models import User
 from app.db.database import get_db
 from app.api.auth.dependency import get_current_user
@@ -31,5 +33,23 @@ def fetch_goal(goal_id:int, db: Session = Depends(get_db), current_user: User = 
 @router.get("/", response_model=List[GoalRead])
 def fetch_all_goals(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return get_all_goals(db, current_user)    
+
+@router.patch("/{goal_id}", response_model=GoalRead)
+def edit_goal(goal_id: int, goal_info: GoalUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    updated_goal = update_goal(goal_id, goal_info, db, current_user)
+    if updated_goal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
+    
+    return updated_goal
+    
+@router.delete("/{goal_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_goal(goal_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    deleted_goal = delete_goal(goal_id, db, current_user)
+    if deleted_goal is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Goal not found")
+    
+    return 
+
+
    
 

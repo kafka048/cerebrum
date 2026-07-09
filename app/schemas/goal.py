@@ -18,6 +18,14 @@ class GoalCreate(BaseModel):
     end_date: Optional[datetime] = None
     status: GoalStatus
 
+class GoalUpdate(BaseModel):
+    goal_name: str | None = None
+    description: str | None = None
+    priority: int | None = None
+    start_date: datetime | None = None
+    end_date: datetime | None = None
+    status: GoalStatus | None = None
+
 class GoalRead(BaseModel):
     goal_id: int
     goal_name: str
