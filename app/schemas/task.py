@@ -5,6 +5,9 @@ class TaskCreate(BaseModel):
     task_name: str
     goal_id: int
 
+class TaskUpdate(BaseModel):
+    task_name: str | None = None
+     
 class TaskRead(BaseModel):
     task_id: int
     task_name: str

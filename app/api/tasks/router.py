@@ -1,7 +1,9 @@
 from fastapi import HTTPException, APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.schemas.task import TaskRead, TaskCreate
+from app.api.tasks.delete_task import delete_task
+from app.api.tasks.update_task import update_task
+from app.schemas.task import TaskRead, TaskCreate, TaskUpdate
 from app.models import User
 from app.db.database import get_db
 from app.api.auth.dependency import get_current_user
@@ -36,5 +38,22 @@ def fetch_all(goal_id: int, db: Session = Depends(get_db), current_user: User = 
 @router.get("/", response_model=list[TaskRead])
 def fetch_all_tasks(db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     return get_all_tasks(db, current_user)
+
+@router.patch("/{task_id}", response_model=TaskRead)
+def edit_task(task_id: int, task_info: TaskUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    updated_task = update_task(task_id, task_info, db, current_user)
+    if updated_task is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task Not Found")
+    
+    return updated_task
+
+@router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
+def remove_task(task_id: int, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
+    deleted_task = delete_task(task_id, db, current_user)
+    if deleted_task is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Task Not Found")
+    
+    return
+   
 
     
