@@ -1,32 +1,22 @@
-import { UserLogin, UserCreate } from "@/types/user";
-import { fetchRequest } from "./client";
+import { apiClient } from "./client";
+import { UserCreate, UserLogin, UserRead, TokenResponse } from "@/types/auth";
 
-
-export async function login(credentials: UserLogin) {
-    const url = "/users/login";
-    const options = {
-        method: "POST",
-        body: JSON.stringify(credentials)
-    }
-
-    return fetchRequest(url, options);
+export async function loginUser(credentials: UserLogin): Promise<TokenResponse> {
+  return apiClient<TokenResponse>("/users/login", {
+    method: "POST",
+    body: JSON.stringify(credentials),
+  });
 }
 
-export async function signup(credentials: UserCreate) {
-    const url = "/users/signup";
-    const options = {
-        method: "POST",
-        body: JSON.stringify(credentials)
-    }
-
-    return fetchRequest(url, options)
+export async function signupUser(data: UserCreate): Promise<UserRead> {
+  return apiClient<UserRead>("/users/signup", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
 }
 
-export async function getCurrentUser() {
-    const url = '/users/me'
-    const options = {
-        method: "GET"
-    }
-
-    return fetchRequest(url, options)
+export async function getCurrentUser(): Promise<UserRead> {
+  return apiClient<UserRead>("/users/me", {
+    method: "GET",
+  });
 }

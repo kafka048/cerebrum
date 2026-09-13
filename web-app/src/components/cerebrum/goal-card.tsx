@@ -1,6 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { ArrowUpRight, MoreHorizontal, Plus } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,158 +15,394 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useCerebrumState } from "@/lib/cerebrum-state";
-import type { Task } from "@/lib/cerebrum-data";
+import { cn } from "@/lib/utils";
 import { CreateTaskDialog } from "./onboarding/dialogs";
+import { Panel, PanelHeader } from "./primitives";
+import { GoalRead, GoalUpdate } from "@/types/goal";
+import { TaskCreate, TaskRead, TaskUpdate } from "@/types/task";
 
-export function GoalCard({ goalId }: { goalId: string }) {
-  const { goals, updateGoal, deleteGoal } = useCerebrumState();
-  const goal = goals.find((g) => g.id === goalId);
-  const [addTaskOpen, setAddTaskOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+interface GoalCardView {
+  goal: GoalRead;
+  tasks: TaskRead[];
+}
 
-  if (!goal) return null;
+export function GoalCard({ goal, tasks }: GoalCardView) {
+  const { updateGoal, removeGoal, createTask, updateTask, removeTask } = useCerebrumState();
+
+  const goalId = goal.goal_id;
+  const goalName = goal.goal_name;
+  const description = goal.description;
+  const priority = goal.priority;
+  const startDate = goal.start_date;
+  const endDate = goal.end_date;
+  const status = goal.status;
+
+  const priorityLabel = (() => {
+    switch (priority) {
+      case 1:
+        return "Low";
+      case 2:
+        return "Medium";
+      case 3:
+        return "High";
+      default:
+        return "Unknown";
+    }
+  })();
+
+  const [isEditGoalOpen, setIsEditGoalOpen] = useState(false);
+  const [isDeleteGoalOpen, setIsDeleteGoalOpen] = useState(false);
+  const [isCreateTaskOpen, setIsCreateTaskOpen] = useState(false);
+
+  const [editingTask, setEditingTask] = useState<TaskRead | null>(null);
+  const [deletingTask, setDeletingTask] = useState<TaskRead | null>(null);
+
+  const [error, setError] = useState("");
+
+  function formatDate(date: string | undefined) {
+    if (!date) return "";
+
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+  }
+
+  async function handleGoalDelete() {
+    setError("");
+
+    try {
+      await removeGoal(goalId);
+      setIsDeleteGoalOpen(false);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong while deleting the goal.");
+      }
+    }
+  }
+
+  async function handleGoalUpdate(goal: GoalUpdate) {
+    setError("");
+
+    try {
+      await updateGoal(goalId, goal);
+      setIsEditGoalOpen(false);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong while updating the goal.");
+      }
+    }
+  }
+
+  async function handleTaskCreate(task: TaskCreate) {
+    setError("");
+
+    try {
+      await createTask(task);
+      setIsCreateTaskOpen(false);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong while creating the task.");
+      }
+    }
+  }
+
+  async function handleTaskUpdate(taskId: number, task: TaskUpdate) {
+    setError("");
+
+    try {
+      await updateTask(taskId, task);
+      setEditingTask(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong while updating the task.");
+      }
+    }
+  }
+
+  async function handleTaskDelete(taskId: number) {
+    setError("");
+
+    try {
+      await removeTask(taskId);
+      setDeletingTask(null);
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError("Something went wrong while deleting the task.");
+      }
+    }
+  }
 
   return (
-    <article className="flex h-full flex-col rounded-xl border border-border bg-surface">
-      {/* Header */}
-      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3 px-6 pt-6 pb-5">
-        <div className="min-w-0">
-          <h2 className="font-display text-[20px] leading-snug tracking-tight text-foreground">
-            {goal.name}
-          </h2>
-          {goal.purpose && (
-            <p className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
-              {goal.purpose}
-            </p>
-          )}
-        </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger
-            aria-label="Goal options"
-            className="-mr-1 -mt-1 grid h-7 w-7 place-items-center rounded-md text-tertiary transition-colors hover:bg-surface-elevated hover:text-foreground"
-          >
-            <MoreHorizontal className="h-4 w-4" strokeWidth={1.75} />
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="min-w-[140px] border-border bg-surface">
-            <DropdownMenuItem onSelect={() => setEditOpen(true)}>Edit Goal</DropdownMenuItem>
-            <DropdownMenuItem
-              onSelect={() => setDeleteOpen(true)}
-              className="text-failed focus:text-failed"
+    <Panel>
+      <PanelHeader
+        density="compact"
+        title={
+          <div>
+            <GoalTitleRow goalName={goalName} status={status} />
+            <GoalMeta
+              description={description}
+              priorityLabel={priorityLabel}
+              startDate={formatDate(startDate)}
+              endDate={endDate ? formatDate(endDate) : undefined}
+            />
+          </div>
+        }
+        right={
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setIsCreateTaskOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-md border border-ember/50 bg-ember/[0.06] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-ember transition-colors hover:bg-ember/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
             >
-              Delete Goal
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </header>
+              + Task
+            </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger
+                aria-label="Goal options"
+                className="inline-flex items-center gap-1.5 rounded-md border border-ember/50 bg-ember/[0.06] px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-ember transition-colors hover:bg-ember/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+              >
+                More
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[160px] border-border bg-surface">
+                <DropdownMenuItem onSelect={() => setIsEditGoalOpen(true)}>
+                  Edit Goal
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => setIsDeleteGoalOpen(true)}
+                  className="text-status-failed focus:text-status-failed"
+                >
+                  Delete Goal
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        }
+      />
 
-      <div className="border-t border-border/70" />
+      {error && <p className="px-6 pb-2 text-[12px] text-status-failed">{error}</p>}
 
-      {/* Tasks */}
-      <div className="flex-1 px-3 py-3">
-        {goal.tasks.length === 0 ? (
-          <p className="px-3 py-6 text-center text-[12.5px] text-tertiary">
-            No tasks yet.
-          </p>
-        ) : (
-          <ul className="space-y-0.5">
-            {goal.tasks.map((t) => (
-              <li key={t.id}>
-                <TaskRowItem task={t} />
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
-
-      <div className="border-t border-border/70" />
-
-      {/* Add Task */}
-      <div className="px-3 py-3">
-        <button
-          onClick={() => setAddTaskOpen(true)}
-          className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-2 rounded-md px-3 py-2.5 text-left text-[13px] text-tertiary transition-colors hover:bg-surface-elevated hover:text-foreground"
-        >
-          <Plus className="h-3.5 w-3.5" strokeWidth={1.75} />
-          <span>Add Task</span>
-        </button>
-      </div>
+      {tasks.length === 0 ? (
+        <p className="px-6 pb-5 text-[13px] italic text-tertiary">
+          No tasks yet — add the behaviors that support this goal.
+        </p>
+      ) : (
+        <div className="divide-hairline px-3 pb-2">
+          {tasks.map((task) => (
+            <TaskRowItem
+              key={task.task_id}
+              task={task}
+              onEdit={() => setEditingTask(task)}
+              onDelete={() => setDeletingTask(task)}
+            />
+          ))}
+        </div>
+      )}
 
       <CreateTaskDialog
-        open={addTaskOpen}
-        onOpenChange={setAddTaskOpen}
-        goalId={goal.id}
-        goalName={goal.name}
+        open={isCreateTaskOpen}
+        onOpenChange={setIsCreateTaskOpen}
+        goalId={goalId}
+        goalName={goalName}
+        onSave={handleTaskCreate}
       />
+
       <EditGoalDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        initialName={goal.name}
-        initialPurpose={goal.purpose}
-        onSave={(name, purpose) => updateGoal(goal.id, { name, purpose })}
+        open={isEditGoalOpen}
+        onOpenChange={setIsEditGoalOpen}
+        initialName={goalName}
+        initialDescription={description}
+        onSave={handleGoalUpdate}
       />
+
       <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
+        open={isDeleteGoalOpen}
+        onOpenChange={setIsDeleteGoalOpen}
         title="Delete this goal?"
-        description={`"${goal.name}" and all of its tasks will be permanently removed.`}
+        description={`"${goalName}" and all of its tasks will be permanently removed.`}
         confirmLabel="Delete Goal"
-        destructive
-        onConfirm={() => deleteGoal(goal.id)}
+        onConfirm={handleGoalDelete}
       />
-    </article>
+
+      <EditTaskDialog
+        open={editingTask !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingTask(null);
+        }}
+        initialName={editingTask?.task_name ?? ""}
+        onSave={(taskUpdate) => {
+          if (editingTask) {
+            handleTaskUpdate(editingTask.task_id, taskUpdate);
+          }
+        }}
+      />
+
+      <ConfirmDialog
+        open={deletingTask !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingTask(null);
+        }}
+        title="Delete this task?"
+        description={`"${deletingTask?.task_name}" will be permanently removed.`}
+        confirmLabel="Delete Task"
+        onConfirm={() => {
+          if (deletingTask) {
+            handleTaskDelete(deletingTask.task_id);
+          }
+        }}
+      />
+    </Panel>
   );
 }
 
-function TaskRowItem({ task }: { task: Task }) {
-  const { updateTask, deleteTask } = useCerebrumState();
-  const [editOpen, setEditOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
+/* -------------------------------------------------------------------------- */
+/*  GoalTitleRow — goal name with status badge inline, no dot indicator       */
+/* -------------------------------------------------------------------------- */
+
+function GoalTitleRow({ goalName, status }: { goalName: string; status?: string }) {
+  const statusTone =
+    status === "Active"
+      ? "text-[oklch(0.68_0.09_150)] border-[oklch(0.68_0.09_150)]/30 bg-[oklch(0.68_0.09_150)]/[0.06]"
+      : status === "Completed"
+        ? "text-status-completed border-status-completed/30 bg-status-completed/[0.06]"
+        : status === "Abandoned"
+          ? "text-status-failed border-status-failed/30 bg-status-failed/[0.06]"
+          : "text-tertiary border-border bg-surface-elevated/50";
 
   return (
-    <div className="group grid grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-2 rounded-md px-3 py-2.5 transition-colors hover:bg-surface-elevated">
-      <p className="truncate text-[14px] text-foreground">{task.name}</p>
-      <Link
-        to="/app/intelligence/$taskId"
-        params={{ taskId: task.id }}
-        className="inline-flex items-center gap-1 text-[12px] text-tertiary transition-colors hover:text-understanding"
-      >
-        View Intelligence
-        <ArrowUpRight className="h-3 w-3" strokeWidth={1.75} />
-      </Link>
-      <DropdownMenu>
-        <DropdownMenuTrigger
-          aria-label="Task options"
-          className="grid h-6 w-6 place-items-center rounded text-tertiary transition-colors hover:bg-background hover:text-foreground"
+    <div className="flex flex-wrap items-baseline gap-3">
+      <h2 className="font-display text-[22px] leading-[1.1] tracking-tight text-foreground">
+        {goalName}
+      </h2>
+      {status && (
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full border px-2 py-0.5 text-[9.5px] font-medium uppercase tracking-[0.1em]",
+            statusTone,
+          )}
         >
-          <MoreHorizontal className="h-3.5 w-3.5" strokeWidth={1.75} />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="min-w-[140px] border-border bg-surface">
-          <DropdownMenuItem onSelect={() => setEditOpen(true)}>Edit Task</DropdownMenuItem>
-          <DropdownMenuItem
-            onSelect={() => setDeleteOpen(true)}
-            className="text-failed focus:text-failed"
-          >
-            Delete Task
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+          {status}
+        </span>
+      )}
+    </div>
+  );
+}
 
-      <EditTaskDialog
-        open={editOpen}
-        onOpenChange={setEditOpen}
-        initialName={task.name}
-        onSave={(name) => updateTask(task.id, { name })}
-      />
-      <ConfirmDialog
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-        title="Delete this task?"
-        description={`"${task.name}" will be permanently removed.`}
-        confirmLabel="Delete Task"
-        destructive
-        onConfirm={() => deleteTask(task.id)}
-      />
+/* -------------------------------------------------------------------------- */
+/*  GoalMeta — description, priority badge, date range                       */
+/* -------------------------------------------------------------------------- */
+
+function GoalMeta({
+  description,
+  priorityLabel,
+  startDate,
+  endDate,
+}: {
+  description?: string;
+  priorityLabel: string;
+  startDate?: string;
+  endDate?: string;
+}) {
+  const priorityTone =
+    priorityLabel === "High"
+      ? "text-[oklch(0.52_0.16_25)] border-[oklch(0.52_0.16_25)]/40 bg-[oklch(0.52_0.16_25)]/[0.08]"
+      : priorityLabel === "Medium"
+        ? "text-ember border-ember/35 bg-ember/[0.06]"
+        : "text-tertiary border-border bg-surface-elevated/50";
+
+  return (
+    <div className="mt-2.5 space-y-2">
+      {description?.trim() && (
+        <p className="text-[12.5px] leading-relaxed text-muted-foreground/90">{description}</p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span
+          className={cn(
+            "inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-medium uppercase tracking-[0.1em]",
+            priorityTone,
+          )}
+        >
+          {priorityLabel} Priority
+        </span>
+
+        {startDate && (
+          <span className="inline-flex items-center gap-1 text-[11px] text-tertiary">
+            <CalendarGlyph />
+            {startDate}
+            {endDate && <span className="text-tertiary/60">→ {endDate}</span>}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CalendarGlyph() {
+  return (
+    <svg
+      width="11"
+      height="11"
+      viewBox="0 0 16 16"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+      className="shrink-0 opacity-60"
+    >
+      <rect x="2" y="3.5" width="12" height="10.5" rx="1.5" />
+      <path d="M2 6.5h12M5.5 2v3M10.5 2v3" />
+    </svg>
+  );
+}
+
+function TaskRowItem({
+  task,
+  onEdit,
+  onDelete,
+}: {
+  task: TaskRead;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="group grid grid-cols-[minmax(0,1fr)_auto] items-center gap-8 py-3 pl-4 pr-2">
+      <p className="min-w-0 truncate text-[15px] text-foreground">{task.task_name}</p>
+      <div className="flex items-center gap-1 text-[11px] uppercase tracking-[0.22em] text-tertiary">
+        <Link
+          to="/app/analytics/$taskId"
+          params={{ taskId: String(task.task_id) }}
+          className="rounded-md px-3 py-1.5 text-ember/80 transition-colors hover:bg-ember/10 hover:text-ember focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+        >
+          Intelligence →
+        </Link>
+        <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
+          <button
+            onClick={onEdit}
+            className="rounded-md px-3 py-1.5 transition-colors hover:bg-surface-elevated hover:text-foreground focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ember/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Edit
+          </button>
+          <button
+            onClick={onDelete}
+            className="rounded-md px-3 py-1.5 transition-colors hover:bg-status-failed/10 hover:text-status-failed focus-visible:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-status-failed/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -176,22 +411,41 @@ function EditGoalDialog({
   open,
   onOpenChange,
   initialName,
-  initialPurpose,
+  initialDescription,
   onSave,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initialName: string;
-  initialPurpose: string;
-  onSave: (name: string, purpose: string) => void;
+  initialDescription: string | undefined;
+  onSave: (goal: GoalUpdate) => void;
 }) {
   const [name, setName] = useState(initialName);
-  const [purpose, setPurpose] = useState(initialPurpose);
+  const [description, setDescription] = useState(initialDescription ?? "");
+
+  useEffect(() => {
+    if (open) {
+      setName(initialName);
+      setDescription(initialDescription ?? "");
+    }
+  }, [open, initialName, initialDescription]);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!name.trim()) return;
-    onSave(name.trim(), purpose.trim());
+
+    const goalUpdate: GoalUpdate = {};
+
+    if (name.trim() !== initialName) {
+      goalUpdate.goal_name = name.trim();
+    }
+
+    if (description.trim() !== (initialDescription ?? "")) {
+      goalUpdate.description = description.trim();
+    }
+
+    onSave(goalUpdate);
     onOpenChange(false);
   };
 
@@ -204,34 +458,34 @@ function EditGoalDialog({
             Refine the direction or its purpose.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <Field label="Name">
             <input
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-[14px] text-foreground focus:border-understanding/60 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated/50 px-3 py-2 text-[14.5px] text-foreground focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/25"
             />
           </Field>
           <Field label="Purpose (optional)">
             <input
-              value={purpose}
-              onChange={(e) => setPurpose(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-[14px] text-foreground focus:border-understanding/60 focus:outline-none"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full rounded-md border border-border bg-surface-elevated/50 px-3 py-2 text-[14.5px] text-foreground focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/25"
             />
           </Field>
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter className="gap-3 sm:gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border bg-transparent px-4 py-2 text-[13px] text-muted-foreground hover:bg-surface-elevated"
+              className="rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-tertiary hover:text-foreground"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="rounded-md bg-foreground px-4 py-2 text-[13px] font-medium text-background disabled:opacity-40"
+              className="rounded-md bg-ember px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-[var(--color-primary-foreground)] disabled:opacity-30"
             >
               Save
             </button>
@@ -251,14 +505,28 @@ function EditTaskDialog({
   open: boolean;
   onOpenChange: (v: boolean) => void;
   initialName: string;
-  onSave: (name: string) => void;
+  onSave: (task: TaskUpdate) => void;
 }) {
   const [name, setName] = useState(initialName);
 
+  useEffect(() => {
+    if (open) {
+      setName(initialName);
+    }
+  }, [open, initialName]);
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!name.trim()) return;
-    onSave(name.trim());
+
+    const taskUpdate: TaskUpdate = {};
+
+    if (name.trim() !== initialName) {
+      taskUpdate.task_name = name.trim();
+    }
+
+    onSave(taskUpdate);
     onOpenChange(false);
   };
 
@@ -271,27 +539,27 @@ function EditTaskDialog({
             Rename this behavior.
           </DialogDescription>
         </DialogHeader>
-        <form onSubmit={submit} className="space-y-4">
+        <form onSubmit={submit} className="space-y-5">
           <Field label="Task">
             <input
               autoFocus
               value={name}
               onChange={(e) => setName(e.target.value)}
-              className="w-full rounded-md border border-border bg-background px-3 py-2.5 text-[14px] text-foreground focus:border-understanding/60 focus:outline-none"
+              className="w-full rounded-md border border-border bg-surface-elevated/50 px-3 py-2 text-[14.5px] text-foreground focus:border-ember focus:outline-none focus:ring-2 focus:ring-ember/25"
             />
           </Field>
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter className="gap-3 sm:gap-3">
             <button
               type="button"
               onClick={() => onOpenChange(false)}
-              className="rounded-md border border-border bg-transparent px-4 py-2 text-[13px] text-muted-foreground hover:bg-surface-elevated"
+              className="rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-tertiary hover:text-foreground"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!name.trim()}
-              className="rounded-md bg-foreground px-4 py-2 text-[13px] font-medium text-background disabled:opacity-40"
+              className="rounded-md bg-ember px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-[var(--color-primary-foreground)] disabled:opacity-30"
             >
               Save
             </button>
@@ -308,7 +576,6 @@ function ConfirmDialog({
   title,
   description,
   confirmLabel,
-  destructive,
   onConfirm,
 }: {
   open: boolean;
@@ -316,7 +583,6 @@ function ConfirmDialog({
   title: string;
   description: string;
   confirmLabel: string;
-  destructive?: boolean;
   onConfirm: () => void;
 }) {
   return (
@@ -326,11 +592,11 @@ function ConfirmDialog({
           <DialogTitle className="font-display text-xl tracking-tight">{title}</DialogTitle>
           <DialogDescription className="text-muted-foreground">{description}</DialogDescription>
         </DialogHeader>
-        <DialogFooter className="gap-2 sm:gap-2">
+        <DialogFooter className="gap-3 sm:gap-3">
           <button
             type="button"
             onClick={() => onOpenChange(false)}
-            className="rounded-md border border-border bg-transparent px-4 py-2 text-[13px] text-muted-foreground hover:bg-surface-elevated"
+            className="rounded-md px-3 py-1.5 text-[11px] uppercase tracking-[0.22em] text-tertiary hover:text-foreground"
           >
             Cancel
           </button>
@@ -340,11 +606,7 @@ function ConfirmDialog({
               onConfirm();
               onOpenChange(false);
             }}
-            className={
-              destructive
-                ? "rounded-md bg-failed px-4 py-2 text-[13px] font-medium text-background"
-                : "rounded-md bg-foreground px-4 py-2 text-[13px] font-medium text-background"
-            }
+            className="rounded-md border border-status-failed/60 bg-status-failed/10 px-3.5 py-1.5 text-[11px] font-medium uppercase tracking-[0.22em] text-status-failed hover:bg-status-failed/20"
           >
             {confirmLabel}
           </button>
@@ -356,8 +618,8 @@ function ConfirmDialog({
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <div className="space-y-1.5">
-      <label className="text-[11px] uppercase tracking-[0.18em] text-tertiary">{label}</label>
+    <div className="space-y-2">
+      <label className="text-[10.5px] uppercase tracking-[0.22em] text-tertiary">{label}</label>
       {children}
     </div>
   );

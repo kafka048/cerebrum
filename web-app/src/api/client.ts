@@ -1,62 +1,70 @@
-// async function because the backend is called
-const BASE_URL: string = "http://127.0.0.1:8000";  
-const TOKEN_STORAGE_KEY: string = "cerebrum.token";
-export async function fetchRequest(endpoint: string, options: RequestInit = {}) {
+const BASE_URL: string = "http://127.0.0.1:8000";
+export const TOKEN_STORAGE_KEY: string = "cerebrum.token";
 
-    const url: string = `${BASE_URL}${endpoint}`; 
+export class ApiError extends Error {
+  status: number;
+  data: unknown;
 
-    const token: string | null = localStorage.getItem(TOKEN_STORAGE_KEY); // if no token; null
-    const headers: HeadersInit = {
-        "Content-Type":"application/json",
-    };
-    if (token){
-        headers["Authorization"] = `Bearer ${token}`
-    };
-
-    const requestOptions = {
-        ...options,
-        headers: {
-            ...headers,
-            ...options.headers // to include the headers caller might send
-        } // merging default and caller headers
-    }
-
-    const response = await fetch(url, requestOptions);
-    if(!response.ok){
-        const error = await response.json()
-        throw new Error(error.detail);
-    };
-
-    const data = await response.json()
-    return data;
-
-     
+  constructor(message: string, status: number, data?: unknown) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.data = data;
+  }
 }
 
-// NOTES:
-// This is a normal typescript module. It cannot call a hook in the auth-state to retrieve the jwt token. 
-// Where else can we get the token? The local storage for the first version atleast.
-// Why local storage? To persist the token, we need to store the token. 
+export async function apiClient<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const url = `${BASE_URL}${endpoint}`;
+  const token = typeof window !== "undefined" ? localStorage.getItem(TOKEN_STORAGE_KEY) : null;
 
-// STEP1: READ THE TOKEN FROM THE LOCAL STORAGE
-// STEP2: BUILD HEADERS -> MERGE THE DEFAULT, CALLER'S AND AUTHORISATION HEADERS
-// STEP3: MAKE THE REQUEST
-// STEP4: RECEIVE THE RESPONSE -> IF SUCCESS RETURN JSON, IF ERROR THROW ERROR
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+    ...(options.headers as Record<string, string>),
+  };
 
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
-// Request
-// ├── URL -> Uniform Resource Locator: answers where the resource exists. Consists of protocol, domain, path and parameters/query
-// ├── Method -> answers what i need to do with this resource. get, post, put, patch, delete
-// ├── Headers -> metadata: data about the incoming data
-// └── Body
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
 
-// ## HEADERS: ANSWERS HOW THE SERVER SHOULD INTERPRET THE REQUEST
-// Content-Type: application/json -> tells fastapi that the body i am sending is json
-// Authorization: Bearer eyJhbGc...-> tells fastapi that the user accessing this resource is represented by this token
+  if (!response.ok) {
+    let errorDetail = `Request failed with status ${response.status}`;
+    let errorBody: unknown = null;
+    try {
+      errorBody = await response.json();
+      if (typeof errorBody === "object" && errorBody !== null) {
+        if ("detail" in errorBody) {
+          const detail = (errorBody as { detail: unknown }).detail;
+          if (typeof detail === "string") {
+            errorDetail = detail;
+          } else if (Array.isArray(detail) && detail.length > 0 && detail[0]?.msg) {
+            errorDetail = detail[0].msg;
+          } else {
+            errorDetail = JSON.stringify(detail);
+          }
+        }
+      }
+    } catch {
+      // Non-JSON response error body
+    }
 
-// Response
-// ├── status -> status code
-// ├── ok
-// ├── headers
-// ├── body
-// └── helper methods
+    if (response.status === 401 && token) {
+      // Unauthorized: remove expired or invalid token
+      if (typeof window !== "undefined") {
+        localStorage.removeItem(TOKEN_STORAGE_KEY);
+      }
+    }
+
+    throw new ApiError(errorDetail, response.status, errorBody);
+  }
+
+  if (response.status === 204) {
+    return null as T;
+  }
+
+  return (await response.json()) as T;
+}

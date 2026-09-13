@@ -29,7 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initSession();
   }, []);
 
-  async function performSignIn(credentials: UserLogin) {    
+  async function performSignIn(credentials: UserLogin) {
     const token: TokenResponse = await login(credentials);
     localStorage.setItem(TOKEN_STORAGE_KEY, token.access_token);
 
@@ -55,7 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(null);
       return;
     } finally {
-      setIsInitialising(false)
+      setIsInitialising(false);
     }
   }
 

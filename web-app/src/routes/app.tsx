@@ -1,70 +1,41 @@
-import { createFileRoute, Link, Outlet, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Outlet, useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth-context";
 import { useEffect } from "react";
-import { CerebrumStateProvider } from "@/lib/cerebrum-state";
-import { AuthProvider, useAuth } from "@/lib/auth-state";
+import { AppShell } from "@/components/app/app-shell";
+import { Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/app")({
   component: AppLayout,
 });
 
 function AppLayout() {
-  return (
-    <AuthProvider>
-      <CerebrumStateProvider>
-        <AuthGate>
-          <div className="min-h-screen bg-background text-foreground">
-            <AppHeader />
-            <main>
-              <Outlet />
-            </main>
-          </div>
-        </AuthGate>
-      </CerebrumStateProvider>
-    </AuthProvider>
-  );
-}
-
-function AppHeader() {
-  return (
-    <div className="mx-auto w-full max-w-5xl px-6 sm:px-10 pt-8 sm:pt-10">
-      <nav className="flex flex-wrap items-baseline gap-x-8 gap-y-2 text-[13.5px]">
-        <Link to="/app" className="font-display text-[17px] tracking-tight text-foreground">
-          Cerebrum
-        </Link>
-        <NavLink to="/app">Today</NavLink>
-        <NavLink to="/app/overview">Overview</NavLink>
-        <NavLink to="/app/settings">Settings</NavLink>
-      </nav>
-    </div>
-  );
-}
-
-function NavLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link
-      to={to}
-      activeOptions={{ exact: true }}
-      activeProps={{ className: "text-foreground" }}
-      inactiveProps={{ className: "text-tertiary hover:text-foreground" }}
-      className="transition-colors"
-    >
-      {children}
-    </Link>
-  );
-}
-
-function AuthGate({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isInitialising } = useAuth();  
+  const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if(isInitialising){
-      return;
-    }
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       navigate({ to: "/auth/login" });
     }
-  }, [isAuthenticated, isInitialising, navigate]);
+  }, [isAuthenticated, isLoading, navigate]);
 
-  return <>{children}</>;
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-canvas text-text-primary">
+        <div className="flex flex-col items-center gap-3 font-mono text-[12px] text-text-secondary">
+          <Loader2 className="h-6 w-6 animate-spin text-signal-cyan" />
+          <span>Synchronizing Behavioral Console...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return null;
+  }
+
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  );
 }

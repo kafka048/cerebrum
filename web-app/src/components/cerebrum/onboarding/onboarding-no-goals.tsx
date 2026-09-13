@@ -2,7 +2,6 @@ import { useState } from "react";
 import { ArrowRight, Target, ListChecks, Activity, Waves, Sparkles } from "lucide-react";
 import { CreateGoalDialog } from "./dialogs";
 
-
 const STEPS = [
   {
     n: "01",
@@ -57,11 +56,13 @@ export function OnboardingNoGoals() {
             className="group inline-flex items-center gap-2 rounded-md bg-foreground px-5 py-3 text-[13.5px] font-medium text-background transition-transform hover:-translate-y-px"
           >
             Create Goal
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={1.75} />
+            <ArrowRight
+              className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
+              strokeWidth={1.75}
+            />
           </button>
         </div>
       </div>
-
 
       <div className="mt-24">
         <p className="mb-8 text-center text-[10px] uppercase tracking-[0.22em] text-tertiary">
@@ -69,7 +70,10 @@ export function OnboardingNoGoals() {
         </p>
         <ol className="relative mx-auto max-w-xl space-y-px overflow-hidden rounded-lg border border-border bg-border">
           {STEPS.map((s) => (
-            <li key={s.n} className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-5 bg-surface p-6">
+            <li
+              key={s.n}
+              className="grid grid-cols-[auto_minmax(0,1fr)] items-start gap-5 bg-surface p-6"
+            >
               <div className="grid h-10 w-10 place-items-center rounded-full border border-border bg-surface-elevated">
                 <s.icon className="h-4 w-4 text-understanding" strokeWidth={1.6} />
               </div>

@@ -1,96 +1,121 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { useAuth } from "@/lib/auth-state";
+import { useAuth } from "@/lib/auth-context";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 export const Route = createFileRoute("/auth/login")({
   head: () => ({
     meta: [
-      { title: "Log in — Cerebrum" },
-      { name: "description", content: "Sign in to Cerebrum." },
+      { title: "Sign In — Cerebrum" },
+      { name: "description", content: "Access your behavioral intelligence console." },
     ],
   }),
   component: LoginPage,
 });
 
 function LoginPage() {
-  const { signin } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const submit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!email.trim() || !password) {
+      setError("Please enter your email and password.");
+      return;
+    }
+
+    setLoading(true);
     setError(null);
     try {
-      if (!email.trim() || !password) {
-        setError("Email and password are required.");
-        return;
-      }
-      await signin({ email: email.trim(), password });      
+      await login({ email: email.trim(), password });
       navigate({ to: "/app" });
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("Something went wrong.");
-      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Authentication failed");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <section>
-      <p className="text-[10px] uppercase tracking-[0.22em] text-understanding">Welcome Back</p>
-      <h1 className="mt-4 font-display text-[40px] leading-[1.05] tracking-tight text-foreground">
-        Log in.
-      </h1>
-      <p className="mt-3 text-[14px] leading-relaxed text-muted-foreground">
-        Return to your behavioral profile.
-      </p>
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-2xl font-semibold tracking-tight text-text-primary">Sign In</h1>
+        <p className="text-[13px] text-text-secondary">
+          Enter your credentials to access your daily execution console.
+        </p>
+      </div>
 
-      <form onSubmit={submit} className="mt-10 space-y-4">
-        <label className="block space-y-1.5">
-          <span className="text-[11px] uppercase tracking-[0.18em] text-tertiary">Email</span>
+      {error && (
+        <div className="rounded border border-signal-coral/40 bg-signal-coral/10 p-3 font-mono text-[12px] text-signal-coral">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-1.5">
+          <label className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+            Email Address
+          </label>
           <input
             type="email"
+            required
+            autoComplete="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@domain.com"
-            className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-[14px] text-foreground placeholder:text-tertiary focus:border-understanding/60 focus:outline-none"
+            placeholder="operative@domain.com"
+            className="w-full rounded border border-border-default bg-surface-base px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim focus:border-border-focus focus:outline-none"
           />
-        </label>
-        <label className="block space-y-1.5">
-          <span className="text-[11px] uppercase tracking-[0.18em] text-tertiary">Password</span>
+        </div>
+
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <label className="font-mono text-[10px] uppercase tracking-wider text-text-muted">
+              Password
+            </label>
+          </div>
           <input
             type="password"
+            required
+            autoComplete="current-password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="••••••••"
-            className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-[14px] text-foreground placeholder:text-tertiary focus:border-understanding/60 focus:outline-none"
+            placeholder="••••••••••••"
+            className="w-full rounded border border-border-default bg-surface-base px-3 py-2 text-[13px] text-text-primary placeholder:text-text-dim focus:border-border-focus focus:outline-none"
           />
-        </label>
-
-        {error && <p className="text-[12px] text-failed">{error}</p>}
+        </div>
 
         <button
           type="submit"
-          className="group mt-2 inline-flex w-full items-center justify-center gap-2 rounded-md bg-foreground px-5 py-3 text-[13.5px] font-medium text-background transition-transform hover:-translate-y-px"
+          disabled={loading}
+          className="flex w-full items-center justify-center gap-2 rounded bg-text-primary py-2.5 font-mono text-[13px] font-semibold text-canvas transition-colors hover:bg-text-secondary disabled:opacity-50"
         >
-          Continue
-          <ArrowRight
-            className="h-4 w-4 transition-transform group-hover:translate-x-0.5"
-            strokeWidth={1.75}
-          />
+          {loading ? (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Authenticating...</span>
+            </>
+          ) : (
+            <>
+              <span>Authenticate</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </button>
       </form>
 
-      <p className="mt-8 text-center text-[13px] text-muted-foreground">
-        New to Cerebrum?{" "}
-        <Link to="/auth/register" className="text-foreground underline-offset-4 hover:underline">
-          Build your profile
+      <div className="pt-2 text-center text-[12px] text-text-muted">
+        <span>No profile yet? </span>
+        <Link
+          to="/auth/register"
+          className="font-medium text-text-secondary underline hover:text-text-primary"
+        >
+          Create an account
         </Link>
-      </p>
-    </section>
+      </div>
+    </div>
   );
 }

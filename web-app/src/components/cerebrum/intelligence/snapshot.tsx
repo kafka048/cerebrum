@@ -1,19 +1,52 @@
-import { ArrowUpRight, MoveRight, ArrowDownRight, RotateCcw } from "lucide-react";
+import {
+  ArrowUpRight,
+  MoveRight,
+  ArrowDownRight,
+  MoveDown,
+  TrendingDown,
+  TrendingUp,
+  MoveUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Direction, TaskSnapshot } from "@/lib/cerebrum-data";
 import { RadialProgress } from "../charts";
+import { SnapshotResult } from "@/types/interpretation";
 
-export function IntelligenceSnapshot({ snapshot }: { snapshot: TaskSnapshot }) {
+type Direction =
+  | "Surging"
+  | "Strong Growth"
+  | "Building"
+  | "Stable"
+  | "Slowing"
+  | "Strong Decline"
+  | "Collapsing";
+
+export function IntelligenceSnapshot({ snapshot }: { snapshot: SnapshotResult }) {
   return (
     <section>
       <SectionHeading eyebrow="Intelligence Snapshot" title="The structure behind the pattern" />
       <div className="grid grid-cols-1 gap-px overflow-hidden rounded-lg border border-border bg-border sm:grid-cols-2 lg:grid-cols-3">
-        <RadialTile label="Reliability" value={snapshot.reliability} context="Historical execution quality" />
-        <RadialTile label="Follow Through" value={snapshot.followThrough} context="Recent execution quality" />
+        <RadialTile
+          label="Reliability"
+          value={snapshot.reliability}
+          context="Historical execution quality"
+        />
+        <RadialTile
+          label="Follow Through"
+          value={snapshot.follow_through}
+          context="Recent execution quality"
+        />
         <RadialTile label="Stability" value={snapshot.stability} context="Overall sustainability" />
-        <DirectionTile direction={snapshot.direction} />
-        <NumericTile label="Current Streak" primary={`${snapshot.currentStreak} days`} context="Active consecutive completions" />
-        <NumericTile label="Strongest Run" primary={`${snapshot.strongestRun} days`} context="Longest continuous streak on record" />
+        <DirectionTile direction={getDirection(snapshot.direction)} />
+        <NumericTile
+          label="Current Streak"
+          primary={`${snapshot.current_streak} days`}
+          context="Active consecutive completions"
+        />
+        <NumericTile
+          label="Strongest Run"
+          primary={`${snapshot.strongest_run} days`}
+          context="Longest continuous streak on record"
+        />
       </div>
     </section>
   );
@@ -54,14 +87,52 @@ function RadialTile({ label, value, context }: { label: string; value: number; c
   );
 }
 
+function getDirection(direction: number): Direction {
+  if (direction >= 0.67) return "Surging";
+  if (direction >= 0.46) return "Strong Growth";
+  if (direction >= 0.26) return "Building";
+
+  if (direction <= -0.67) return "Collapsing";
+  if (direction <= -0.46) return "Strong Decline";
+  if (direction <= -0.26) return "Slowing";
+
+  return "Stable";
+}
+
 function DirectionTile({ direction }: { direction: Direction }) {
   const map = {
-    Building: { icon: ArrowUpRight, color: "text-completed" },
-    Stable: { icon: MoveRight, color: "text-muted-foreground" },
-    Slowing: { icon: ArrowDownRight, color: "text-skipped" },
-    Recovering: { icon: RotateCcw, color: "text-understanding" },
+    Surging: {
+      icon: MoveUp,
+      color: "text-completed",
+    },
+    "Strong Growth": {
+      icon: TrendingUp,
+      color: "text-completed",
+    },
+    Building: {
+      icon: ArrowUpRight,
+      color: "text-understanding",
+    },
+    Stable: {
+      icon: MoveRight,
+      color: "text-muted-foreground",
+    },
+    Slowing: {
+      icon: ArrowDownRight,
+      color: "text-skipped",
+    },
+    "Strong Decline": {
+      icon: TrendingDown,
+      color: "text-destructive",
+    },
+    Collapsing: {
+      icon: MoveDown,
+      color: "text-destructive",
+    },
   } as const;
+
   const { icon: Icon, color } = map[direction];
+
   return (
     <TileShell label="Direction" context="Trajectory over the recent window">
       <div className="flex items-center gap-3">
@@ -71,8 +142,15 @@ function DirectionTile({ direction }: { direction: Direction }) {
     </TileShell>
   );
 }
-
-function NumericTile({ label, primary, context }: { label: string; primary: string; context: string }) {
+function NumericTile({
+  label,
+  primary,
+  context,
+}: {
+  label: string;
+  primary: string;
+  context: string;
+}) {
   return (
     <TileShell label={label} context={context}>
       <div className="flex items-end gap-2">

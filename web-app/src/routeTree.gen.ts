@@ -17,7 +17,9 @@ import { Route as AuthRegisterRouteImport } from './routes/auth.register'
 import { Route as AuthLoginRouteImport } from './routes/auth.login'
 import { Route as AppSettingsRouteImport } from './routes/app.settings'
 import { Route as AppOverviewRouteImport } from './routes/app.overview'
-import { Route as AppIntelligenceTaskIdRouteImport } from './routes/app.intelligence.$taskId'
+import { Route as AppGoalsRouteImport } from './routes/app.goals'
+import { Route as AppAnalyticsIndexRouteImport } from './routes/app.analytics.index'
+import { Route as AppAnalyticsTaskIdRouteImport } from './routes/app.analytics.$taskId'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -59,9 +61,19 @@ const AppOverviewRoute = AppOverviewRouteImport.update({
   path: '/overview',
   getParentRoute: () => AppRoute,
 } as any)
-const AppIntelligenceTaskIdRoute = AppIntelligenceTaskIdRouteImport.update({
-  id: '/intelligence/$taskId',
-  path: '/intelligence/$taskId',
+const AppGoalsRoute = AppGoalsRouteImport.update({
+  id: '/goals',
+  path: '/goals',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsIndexRoute = AppAnalyticsIndexRouteImport.update({
+  id: '/analytics/',
+  path: '/analytics/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAnalyticsTaskIdRoute = AppAnalyticsTaskIdRouteImport.update({
+  id: '/analytics/$taskId',
+  path: '/analytics/$taskId',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -69,34 +81,40 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/app/goals': typeof AppGoalsRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app/': typeof AppIndexRoute
-  '/app/intelligence/$taskId': typeof AppIntelligenceTaskIdRoute
+  '/app/analytics/$taskId': typeof AppAnalyticsTaskIdRoute
+  '/app/analytics/': typeof AppAnalyticsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRouteWithChildren
+  '/app/goals': typeof AppGoalsRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app': typeof AppIndexRoute
-  '/app/intelligence/$taskId': typeof AppIntelligenceTaskIdRoute
+  '/app/analytics/$taskId': typeof AppAnalyticsTaskIdRoute
+  '/app/analytics': typeof AppAnalyticsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/app': typeof AppRouteWithChildren
   '/auth': typeof AuthRouteWithChildren
+  '/app/goals': typeof AppGoalsRoute
   '/app/overview': typeof AppOverviewRoute
   '/app/settings': typeof AppSettingsRoute
   '/auth/login': typeof AuthLoginRoute
   '/auth/register': typeof AuthRegisterRoute
   '/app/': typeof AppIndexRoute
-  '/app/intelligence/$taskId': typeof AppIntelligenceTaskIdRoute
+  '/app/analytics/$taskId': typeof AppAnalyticsTaskIdRoute
+  '/app/analytics/': typeof AppAnalyticsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -104,33 +122,39 @@ export interface FileRouteTypes {
     | '/'
     | '/app'
     | '/auth'
+    | '/app/goals'
     | '/app/overview'
     | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app/'
-    | '/app/intelligence/$taskId'
+    | '/app/analytics/$taskId'
+    | '/app/analytics/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/auth'
+    | '/app/goals'
     | '/app/overview'
     | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app'
-    | '/app/intelligence/$taskId'
+    | '/app/analytics/$taskId'
+    | '/app/analytics'
   id:
     | '__root__'
     | '/'
     | '/app'
     | '/auth'
+    | '/app/goals'
     | '/app/overview'
     | '/app/settings'
     | '/auth/login'
     | '/auth/register'
     | '/app/'
-    | '/app/intelligence/$taskId'
+    | '/app/analytics/$taskId'
+    | '/app/analytics/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -197,28 +221,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppOverviewRouteImport
       parentRoute: typeof AppRoute
     }
-    '/app/intelligence/$taskId': {
-      id: '/app/intelligence/$taskId'
-      path: '/intelligence/$taskId'
-      fullPath: '/app/intelligence/$taskId'
-      preLoaderRoute: typeof AppIntelligenceTaskIdRouteImport
+    '/app/goals': {
+      id: '/app/goals'
+      path: '/goals'
+      fullPath: '/app/goals'
+      preLoaderRoute: typeof AppGoalsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics/': {
+      id: '/app/analytics/'
+      path: '/analytics'
+      fullPath: '/app/analytics/'
+      preLoaderRoute: typeof AppAnalyticsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/app/analytics/$taskId': {
+      id: '/app/analytics/$taskId'
+      path: '/analytics/$taskId'
+      fullPath: '/app/analytics/$taskId'
+      preLoaderRoute: typeof AppAnalyticsTaskIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
 }
 
 interface AppRouteChildren {
+  AppGoalsRoute: typeof AppGoalsRoute
   AppOverviewRoute: typeof AppOverviewRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
-  AppIntelligenceTaskIdRoute: typeof AppIntelligenceTaskIdRoute
+  AppAnalyticsTaskIdRoute: typeof AppAnalyticsTaskIdRoute
+  AppAnalyticsIndexRoute: typeof AppAnalyticsIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppGoalsRoute: AppGoalsRoute,
   AppOverviewRoute: AppOverviewRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
-  AppIntelligenceTaskIdRoute: AppIntelligenceTaskIdRoute,
+  AppAnalyticsTaskIdRoute: AppAnalyticsTaskIdRoute,
+  AppAnalyticsIndexRoute: AppAnalyticsIndexRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
